@@ -1,0 +1,243 @@
+[gd_scene load_steps=30 format=3]
+
+[ext_resource type="Script" path="res://scripts/rooms/room_scene.gd" id="1_room"]
+[ext_resource type="Script" path="res://scripts/rooms/door_portal.gd" id="2_door"]
+[ext_resource type="Script" path="res://scripts/rooms/hook_anchor.gd" id="3_anchor"]
+[ext_resource type="Script" path="res://scripts/rooms/enemy_spawn.gd" id="4_enemy"]
+[ext_resource type="Script" path="res://scripts/rooms/hazard_zone.gd" id="5_hazard"]
+[ext_resource type="Script" path="res://scripts/rooms/bone_gate.gd" id="6_gate"]
+[ext_resource type="Script" path="res://scripts/rooms/breakable_spawn.gd" id="7_break"]
+[ext_resource type="Texture2D" path="res://assets/vania07/quarantine_gallery.png" id="10_bg"]
+[ext_resource type="Texture2D" path="res://assets/vania11/stairs.png" id="11_stairs"]
+[ext_resource type="Texture2D" path="res://assets/vania11/railing.png" id="12_rail"]
+
+[sub_resource type="RectangleShape2D" id="floor"]
+size = Vector2(1152, 28)
+
+[sub_resource type="RectangleShape2D" id="p1"]
+size = Vector2(210, 12)
+
+[sub_resource type="RectangleShape2D" id="p2"]
+size = Vector2(220, 12)
+
+[sub_resource type="RectangleShape2D" id="p3"]
+size = Vector2(220, 12)
+
+[sub_resource type="RectangleShape2D" id="p4"]
+size = Vector2(240, 12)
+
+[sub_resource type="RectangleShape2D" id="hookp"]
+size = Vector2(210, 12)
+
+[sub_resource type="RectangleShape2D" id="door"]
+size = Vector2(28, 86)
+
+[node name="Gallery" type="Node2D"]
+script = ExtResource("1_room")
+room_id = "gallery"
+room_title = "II. THE QUARANTINE GALLERY"
+room_size = Vector2(1152, 648)
+camera_offset = Vector2(0.0, -38.0)
+camera_zoom = Vector2(0.96, 0.96)
+intro_note = "The quarantine gallery has stairs, balconies, and several entirely avoidable management layers."
+poi_id = ""
+poi_trigger_x = -1
+poi_focus_offset = Vector2(0, 0)
+
+[node name="Background" type="Node2D" parent="."]
+z_index = -20
+[node name="RoomArt" type="Sprite2D" parent="Background"]
+texture = ExtResource("10_bg")
+position = Vector2(576,324)
+[node name="Gameplay" type="Node2D" parent="."]
+[node name="Collision" type="Node2D" parent="Gameplay"]
+
+[node name="Floor" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(576, 634)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/Floor"]
+shape = SubResource("floor")
+
+[node name="Step1" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(220, 578)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/Step1"]
+shape = SubResource("p1")
+one_way_collision = true
+one_way_collision_margin = 7.0
+
+[node name="Step2" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(385, 526)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/Step2"]
+shape = SubResource("p2")
+one_way_collision = true
+one_way_collision_margin = 7.0
+
+[node name="Step3" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(555, 476)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/Step3"]
+shape = SubResource("p3")
+one_way_collision = true
+one_way_collision_margin = 7.0
+
+[node name="Step4" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(735, 426)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/Step4"]
+shape = SubResource("p4")
+one_way_collision = true
+one_way_collision_margin = 7.0
+
+[node name="HookGantry" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(900, 318)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/HookGantry"]
+shape = SubResource("hookp")
+one_way_collision = true
+one_way_collision_margin = 7.0
+
+[node name="GameplayStairs" type="Sprite2D" parent="Gameplay"]
+texture = ExtResource("11_stairs")
+position = Vector2(260, 575)
+scale = Vector2(1.45, 1.45)
+z_index = 1
+[node name="UpperRail" type="Sprite2D" parent="Gameplay"]
+texture = ExtResource("12_rail")
+position = Vector2(900, 293)
+scale = Vector2(2.2,1.0)
+z_index = 2
+[node name="Doors" type="Node2D" parent="Gameplay"]
+
+[node name="Door_left" type="Area2D" parent="Gameplay/Doors"]
+position = Vector2(12, 620)
+script = ExtResource("2_door")
+door_id = "left"
+target_room = "receiving"
+target_door = "right"
+direction = "left"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Doors/Door_left"]
+shape = SubResource("door")
+
+[node name="Door_right" type="Area2D" parent="Gameplay/Doors"]
+position = Vector2(1140, 620)
+script = ExtResource("2_door")
+door_id = "right"
+target_room = "gate"
+target_door = "left"
+direction = "right"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Doors/Door_right"]
+shape = SubResource("door")
+
+[node name="SpawnPoints" type="Node2D" parent="."]
+
+[node name="left" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(70, 620)
+
+[node name="right" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(1070, 620)
+
+[node name="default" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(70, 620)
+
+[node name="SafePoints" type="Node2D" parent="."]
+
+[node name="Safe0" type="Marker2D" parent="SafePoints"]
+position = Vector2(80, 620)
+
+[node name="Safe1" type="Marker2D" parent="SafePoints"]
+position = Vector2(520, 620)
+
+[node name="Safe2" type="Marker2D" parent="SafePoints"]
+position = Vector2(1040, 620)
+
+[node name="Safe3" type="Marker2D" parent="SafePoints"]
+position = Vector2(380, 514)
+
+[node name="EnemySpawns" type="Node2D" parent="."]
+
+[node name="BellKeeper" type="Marker2D" parent="EnemySpawns"]
+position = Vector2(440, 620)
+script = ExtResource("4_enemy")
+archetype = 5
+patrol_left = 320
+patrol_right = 560
+elite = false
+phase = 0.22
+
+[node name="LanternTosser" type="Marker2D" parent="EnemySpawns"]
+position = Vector2(555, 464)
+script = ExtResource("4_enemy")
+archetype = 7
+patrol_left = 470
+patrol_right = 640
+elite = false
+phase = 0.62
+
+[node name="BoneCrow" type="Marker2D" parent="EnemySpawns"]
+position = Vector2(850, 365)
+script = ExtResource("4_enemy")
+archetype = 10
+patrol_left = 760
+patrol_right = 980
+elite = false
+phase = 0.42
+
+[node name="BreakableSpawns" type="Node2D" parent="."]
+
+[node name="Candle0" type="Marker2D" parent="BreakableSpawns"]
+position = Vector2(270, 620)
+script = ExtResource("7_break")
+prop_kind = "candle"
+drop_kind = "ash"
+drop_amount = 1
+health = 1
+
+[node name="Urn0" type="Marker2D" parent="BreakableSpawns"]
+position = Vector2(770, 620)
+script = ExtResource("7_break")
+prop_kind = "urn"
+drop_kind = "ash"
+drop_amount = 2
+health = 2
+
+[node name="CandleUpper" type="Marker2D" parent="BreakableSpawns"]
+position = Vector2(720, 414)
+script = ExtResource("7_break")
+prop_kind = "candle"
+drop_kind = "flesh"
+drop_amount = 1
+health = 1
+
+[node name="HookAnchors" type="Node2D" parent="."]
+
+[node name="Anchor_gallery_secret" type="Marker2D" parent="HookAnchors"]
+position = Vector2(910, 250)
+script = ExtResource("3_anchor")
+anchor_id = "gallery_secret"
+label = "QUARANTINE GANTRY"
+landing_offset = Vector2(0, 62)
+max_range = 220.0
+
+[node name="HeartShard" type="Marker2D" parent="Gameplay"]
+position = Vector2(910,300)
+[node name="ShardGlow" type="Polygon2D" parent="Gameplay/HeartShard"]
+polygon = PackedVector2Array(0,-12,7,-3,4,8,-4,8,-7,-3)
+color = Color(0.84,0.12,0.3,0.96)
+[node name="Foreground" type="Node2D" parent="."]
+z_index = 12

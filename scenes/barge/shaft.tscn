@@ -1,0 +1,265 @@
+[gd_scene load_steps=19 format=3]
+
+[ext_resource type="Script" path="res://scripts/rooms/room_scene.gd" id="1_room"]
+[ext_resource type="Script" path="res://scripts/rooms/door_portal.gd" id="2_door"]
+[ext_resource type="Script" path="res://scripts/rooms/hook_anchor.gd" id="3_anchor"]
+[ext_resource type="Script" path="res://scripts/rooms/enemy_spawn.gd" id="4_enemy"]
+[ext_resource type="Script" path="res://scripts/rooms/hazard_zone.gd" id="5_hazard"]
+[ext_resource type="Script" path="res://scripts/rooms/bone_gate.gd" id="6_gate"]
+[ext_resource type="Texture2D" path="res://assets/vania07/winch_shaft_tall.png" id="10_bg"]
+[ext_resource type="Texture2D" path="res://assets/vania/prop_chains.png" id="11_chains"]
+[ext_resource type="Texture2D" path="res://assets/vania/prop_lantern.png" id="12_lantern"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
+size = Vector2(384.0, 28.0)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_2"]
+size = Vector2(135.0, 12.0)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_3"]
+size = Vector2(120.0, 12.0)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_4"]
+size = Vector2(125.0, 12.0)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_5"]
+size = Vector2(115.0, 12.0)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_6"]
+size = Vector2(120.0, 12.0)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_7"]
+size = Vector2(110.0, 12.0)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_8"]
+size = Vector2(28.0, 86.0)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_9"]
+size = Vector2(90.0, 28.0)
+
+[node name="Shaft" type="Node2D"]
+script = ExtResource("1_room")
+room_id = "shaft"
+room_title = "IX. THE WINCH SHAFT"
+room_size = Vector2(384.0, 648.0)
+camera_offset = Vector2(0.0, -50.0)
+camera_zoom = Vector2(1.0, 1.0)
+intro_note = "The winch shaft makes the Grave Hook useful immediately, which feels suspiciously convenient."
+poi_id = ""
+poi_trigger_x = -1.0
+poi_focus_offset = Vector2(0.0, 0.0)
+
+[node name="Background" type="Node2D" parent="."]
+z_index = -20
+
+[node name="RoomArt" type="Sprite2D" parent="Background"]
+texture = ExtResource("10_bg")
+position = Vector2(192.0, 324.0)
+z_index = -20
+
+[node name="Gameplay" type="Node2D" parent="."]
+
+[node name="Collision" type="Node2D" parent="Gameplay"]
+
+[node name="Surface0" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(192.0, 634.0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/Surface0"]
+shape = SubResource("RectangleShape2D_1")
+
+[node name="Surface1" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(122.5, 572.0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/Surface1"]
+shape = SubResource("RectangleShape2D_2")
+one_way_collision = true
+one_way_collision_margin = 7.0
+
+[node name="Surface2" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(265.0, 476.0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/Surface2"]
+shape = SubResource("RectangleShape2D_3")
+one_way_collision = true
+one_way_collision_margin = 7.0
+
+[node name="Surface3" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(127.5, 381.0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/Surface3"]
+shape = SubResource("RectangleShape2D_4")
+one_way_collision = true
+one_way_collision_margin = 7.0
+
+[node name="Surface4" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(262.5, 286.0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/Surface4"]
+shape = SubResource("RectangleShape2D_5")
+one_way_collision = true
+one_way_collision_margin = 7.0
+
+[node name="Surface5" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(140.0, 191.0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/Surface5"]
+shape = SubResource("RectangleShape2D_6")
+one_way_collision = true
+one_way_collision_margin = 7.0
+
+[node name="Surface6" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(195.0, 96.0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/Surface6"]
+shape = SubResource("RectangleShape2D_7")
+one_way_collision = true
+one_way_collision_margin = 7.0
+
+[node name="Doors" type="Node2D" parent="Gameplay"]
+
+[node name="Door_left" type="Area2D" parent="Gameplay/Doors"]
+position = Vector2(12.0, 620.0)
+script = ExtResource("2_door")
+door_id = "left"
+target_room = "chain"
+target_door = "right"
+direction = "left"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Doors/Door_left"]
+shape = SubResource("RectangleShape2D_8")
+
+[node name="Door_up" type="Area2D" parent="Gameplay/Doors"]
+position = Vector2(195.0, 12.0)
+script = ExtResource("2_door")
+door_id = "up"
+target_room = "orlop"
+target_door = "shaft_hatch"
+direction = "up"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Doors/Door_up"]
+shape = SubResource("RectangleShape2D_9")
+
+[node name="SpawnPoints" type="Node2D" parent="."]
+
+[node name="left" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(55.0, 620.0)
+
+[node name="top" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(195.0, 90.0)
+
+[node name="default" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(55.0, 620.0)
+
+[node name="SafePoints" type="Node2D" parent="."]
+
+[node name="Safe0" type="Marker2D" parent="SafePoints"]
+position = Vector2(75.0, 620.0)
+
+[node name="Safe1" type="Marker2D" parent="SafePoints"]
+position = Vector2(125.0, 566.0)
+
+[node name="Safe2" type="Marker2D" parent="SafePoints"]
+position = Vector2(265.0, 470.0)
+
+[node name="Safe3" type="Marker2D" parent="SafePoints"]
+position = Vector2(125.0, 375.0)
+
+[node name="Safe4" type="Marker2D" parent="SafePoints"]
+position = Vector2(260.0, 280.0)
+
+[node name="Safe5" type="Marker2D" parent="SafePoints"]
+position = Vector2(140.0, 185.0)
+
+[node name="Safe6" type="Marker2D" parent="SafePoints"]
+position = Vector2(195.0, 90.0)
+
+[node name="EnemySpawns" type="Node2D" parent="."]
+
+[node name="Enemy0" type="Marker2D" parent="EnemySpawns"]
+position = Vector2(265.0, 468.0)
+script = ExtResource("4_enemy")
+archetype = 3
+patrol_left = 215.0
+patrol_right = 315.0
+elite = false
+phase = 0.35
+
+[node name="HookAnchors" type="Node2D" parent="."]
+
+[node name="Anchor_shaft_1" type="Node2D" parent="HookAnchors"]
+position = Vector2(265.0, 430.0)
+script = ExtResource("3_anchor")
+anchor_id = "shaft_1"
+label = "LOWER WINCH"
+landing_offset = Vector2(0.0, 40.0)
+max_range = 210.0
+tutorial_anchor = true
+
+[node name="Anchor_shaft_2" type="Node2D" parent="HookAnchors"]
+position = Vector2(125.0, 335.0)
+script = ExtResource("3_anchor")
+anchor_id = "shaft_2"
+label = "SECOND WINCH"
+landing_offset = Vector2(0.0, 40.0)
+max_range = 210.0
+tutorial_anchor = false
+
+[node name="Anchor_shaft_3" type="Node2D" parent="HookAnchors"]
+position = Vector2(260.0, 240.0)
+script = ExtResource("3_anchor")
+anchor_id = "shaft_3"
+label = "THIRD WINCH"
+landing_offset = Vector2(0.0, 40.0)
+max_range = 210.0
+tutorial_anchor = false
+
+[node name="Anchor_shaft_4" type="Node2D" parent="HookAnchors"]
+position = Vector2(140.0, 145.0)
+script = ExtResource("3_anchor")
+anchor_id = "shaft_4"
+label = "UPPER WINCH"
+landing_offset = Vector2(0.0, 40.0)
+max_range = 210.0
+tutorial_anchor = false
+
+[node name="Anchor_shaft_5" type="Node2D" parent="HookAnchors"]
+position = Vector2(195.0, 50.0)
+script = ExtResource("3_anchor")
+anchor_id = "shaft_5"
+label = "ORLOP HATCH"
+landing_offset = Vector2(0.0, 40.0)
+max_range = 180.0
+tutorial_anchor = false
+
+[node name="Foreground" type="Node2D" parent="."]
+z_index = 12
+
+[node name="ForegroundChains" type="Sprite2D" parent="Foreground"]
+texture = ExtResource("11_chains")
+position = Vector2(310.0, 300.0)
+scale = Vector2(0.2, 0.4)
+modulate = Color(0.72, 0.72, 0.76, 0.52)
+z_index = 13
+[node name="LeftWallFill" type="Polygon2D" parent="Background"]
+polygon = PackedVector2Array(-160, 0, 0, 0, 0, 648, -160, 648)
+color = Color(0.055, 0.035, 0.028, 1)
+z_index = -23
+
+[node name="RightWallFill" type="Polygon2D" parent="Background"]
+polygon = PackedVector2Array(384, 0, 544, 0, 544, 648, 384, 648)
+color = Color(0.055, 0.035, 0.028, 1)
+z_index = -23

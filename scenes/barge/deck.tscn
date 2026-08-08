@@ -1,0 +1,214 @@
+[gd_scene load_steps=30 format=3]
+
+[ext_resource type="Script" path="res://scripts/rooms/room_scene.gd" id="1_room"]
+[ext_resource type="Script" path="res://scripts/rooms/door_portal.gd" id="2_door"]
+[ext_resource type="Script" path="res://scripts/rooms/hook_anchor.gd" id="3_anchor"]
+[ext_resource type="Script" path="res://scripts/rooms/enemy_spawn.gd" id="4_enemy"]
+[ext_resource type="Script" path="res://scripts/rooms/hazard_zone.gd" id="5_hazard"]
+[ext_resource type="Script" path="res://scripts/rooms/bone_gate.gd" id="6_gate"]
+[ext_resource type="Script" path="res://scripts/rooms/breakable_spawn.gd" id="7_break"]
+[ext_resource type="Texture2D" path="res://assets/vania07/storm_deck.png" id="10_bg"]
+[ext_resource type="Texture2D" path="res://assets/vania11/railing.png" id="11_rail"]
+
+[sub_resource type="RectangleShape2D" id="floor"]
+size = Vector2(1152, 60)
+
+[sub_resource type="RectangleShape2D" id="p1"]
+size = Vector2(220, 12)
+
+[sub_resource type="RectangleShape2D" id="p2"]
+size = Vector2(220, 12)
+
+[sub_resource type="RectangleShape2D" id="door"]
+size = Vector2(28, 86)
+
+[node name="Deck" type="Node2D"]
+script = ExtResource("1_room")
+room_id = "deck"
+room_title = "VI. THE OSSUARY DECK"
+room_size = Vector2(1152, 360)
+camera_offset = Vector2(0,-28)
+camera_zoom = Vector2(0.9,0.9)
+intro_note = "Open deck. Cold rain. Enough room at last for everybody to be dangerous on purpose."
+poi_id = "deck_reveal"
+poi_trigger_x = 190
+poi_focus_offset = Vector2(80,-12)
+
+[node name="Background" type="Node2D" parent="."]
+z_index=-20
+[node name="RoomArt" type="Sprite2D" parent="Background"]
+texture=ExtResource("10_bg")
+position=Vector2(576,180)
+[node name="Gameplay" type="Node2D" parent="."]
+[node name="Collision" type="Node2D" parent="Gameplay"]
+
+[node name="Floor" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(576, 330)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/Floor"]
+shape = SubResource("floor")
+
+[node name="UpperLeft" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(330, 250)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/UpperLeft"]
+shape = SubResource("p1")
+one_way_collision = true
+one_way_collision_margin = 7.0
+
+[node name="UpperRight" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(780, 230)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/UpperRight"]
+shape = SubResource("p2")
+one_way_collision = true
+one_way_collision_margin = 7.0
+
+[node name="Doors" type="Node2D" parent="Gameplay"]
+
+[node name="Door_left" type="Area2D" parent="Gameplay/Doors"]
+position = Vector2(12, 300)
+script = ExtResource("2_door")
+door_id = "left"
+target_room = "gate"
+target_door = "right"
+direction = "left"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Doors/Door_left"]
+shape = SubResource("door")
+
+[node name="Door_right" type="Area2D" parent="Gameplay/Doors"]
+position = Vector2(1140, 300)
+script = ExtResource("2_door")
+door_id = "right"
+target_room = "END"
+target_door = "default"
+direction = "right"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Doors/Door_right"]
+shape = SubResource("door")
+
+[node name="SpawnPoints" type="Node2D" parent="."]
+
+[node name="left" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(70, 300)
+
+[node name="default" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(70, 300)
+
+[node name="SafePoints" type="Node2D" parent="."]
+
+[node name="Safe0" type="Marker2D" parent="SafePoints"]
+position = Vector2(80, 300)
+
+[node name="Safe1" type="Marker2D" parent="SafePoints"]
+position = Vector2(560, 300)
+
+[node name="Safe2" type="Marker2D" parent="SafePoints"]
+position = Vector2(1040, 300)
+
+[node name="EnemySpawns" type="Node2D" parent="."]
+
+[node name="ShieldGuard" type="Marker2D" parent="EnemySpawns"]
+position = Vector2(240, 300)
+script = ExtResource("4_enemy")
+archetype = 6
+patrol_left = 140
+patrol_right = 340
+elite = false
+phase = 0.05
+
+[node name="LanternTosser" type="Marker2D" parent="EnemySpawns"]
+position = Vector2(330, 244)
+script = ExtResource("4_enemy")
+archetype = 7
+patrol_left = 250
+patrol_right = 405
+elite = false
+phase = 0.42
+
+[node name="BellKeeper" type="Marker2D" parent="EnemySpawns"]
+position = Vector2(570, 300)
+script = ExtResource("4_enemy")
+archetype = 5
+patrol_left = 490
+patrol_right = 660
+elite = false
+phase = 0.68
+
+[node name="BoneCrow" type="Marker2D" parent="EnemySpawns"]
+position = Vector2(750, 160)
+script = ExtResource("4_enemy")
+archetype = 10
+patrol_left = 670
+patrol_right = 840
+elite = false
+phase = 0.27
+
+[node name="HangedSailor" type="Marker2D" parent="EnemySpawns"]
+position = Vector2(820, 300)
+script = ExtResource("4_enemy")
+archetype = 9
+patrol_left = 735
+patrol_right = 900
+elite = false
+phase = 0.52
+
+[node name="DeckBrute" type="Marker2D" parent="EnemySpawns"]
+position = Vector2(1010, 300)
+script = ExtResource("4_enemy")
+archetype = 4
+patrol_left = 920
+patrol_right = 1100
+elite = true
+phase = 0.18
+
+[node name="BreakableSpawns" type="Node2D" parent="."]
+
+[node name="CandleDeck0" type="Marker2D" parent="BreakableSpawns"]
+position = Vector2(420, 300)
+script = ExtResource("7_break")
+prop_kind = "candle"
+drop_kind = "ash"
+drop_amount = 1
+health = 1
+
+[node name="UrnDeck0" type="Marker2D" parent="BreakableSpawns"]
+position = Vector2(690, 300)
+script = ExtResource("7_break")
+prop_kind = "urn"
+drop_kind = "flesh"
+drop_amount = 1
+health = 1
+
+[node name="UrnDeck1" type="Marker2D" parent="BreakableSpawns"]
+position = Vector2(1080, 300)
+script = ExtResource("7_break")
+prop_kind = "urn"
+drop_kind = "ash"
+drop_amount = 3
+health = 2
+
+[node name="HookAnchors" type="Node2D" parent="."]
+
+[node name="Anchor_deck_mast" type="Marker2D" parent="HookAnchors"]
+position = Vector2(620, 160)
+script = ExtResource("3_anchor")
+anchor_id="deck_mast"
+label="STORM MAST"
+landing_offset=Vector2(0,62)
+max_range=220.0
+
+[node name="Foreground" type="Node2D" parent="."]
+z_index=12
+[node name="DeckRail" type="Sprite2D" parent="Foreground"]
+texture=ExtResource("11_rail")
+position=Vector2(576,292)
+scale=Vector2(11.0,1.0)
+modulate=Color(0.55,0.55,0.58,0.38)

@@ -1,0 +1,30 @@
+class_name RoomHookAnchor
+extends Node2D
+
+@export var anchor_id: String = "anchor"
+@export var label: String = "VIOLET RING"
+@export var landing_offset: Vector2 = Vector2(0.0, 48.0)
+@export var max_range: float = 240.0
+@export var tutorial_anchor: bool = false
+
+var available: bool = false
+var selected: bool = false
+
+func _ready() -> void:
+	add_to_group("room_hook_anchors")
+	queue_redraw()
+
+func set_visual_state(is_available: bool, is_selected: bool) -> void:
+	available = is_available
+	selected = is_selected
+	queue_redraw()
+
+func landing_position() -> Vector2:
+	return global_position + landing_offset
+
+func _draw() -> void:
+	var pulse: float = 1.0 + (0.12 * absf(sin(Time.get_ticks_msec() * 0.007)) if available else 0.0)
+	var radius: float = (10.0 if selected else 8.0) * pulse
+	var color: Color = Color(0.79, 0.38, 0.95, 1.0) if selected else (Color(0.58, 0.28, 0.72, 0.86) if available else Color(0.3, 0.2, 0.36, 0.5))
+	draw_circle(Vector2.ZERO, radius, Color(color.r, color.g, color.b, 0.12))
+	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 24, color, 2.2)

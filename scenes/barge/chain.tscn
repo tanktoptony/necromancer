@@ -1,0 +1,173 @@
+[gd_scene load_steps=30 format=3]
+
+[ext_resource type="Script" path="res://scripts/rooms/room_scene.gd" id="1_room"]
+[ext_resource type="Script" path="res://scripts/rooms/door_portal.gd" id="2_door"]
+[ext_resource type="Script" path="res://scripts/rooms/hook_anchor.gd" id="3_anchor"]
+[ext_resource type="Script" path="res://scripts/rooms/enemy_spawn.gd" id="4_enemy"]
+[ext_resource type="Script" path="res://scripts/rooms/hazard_zone.gd" id="5_hazard"]
+[ext_resource type="Script" path="res://scripts/rooms/bone_gate.gd" id="6_gate"]
+[ext_resource type="Script" path="res://scripts/rooms/breakable_spawn.gd" id="7_break"]
+[ext_resource type="Texture2D" path="res://assets/vania07/chain_crypt.png" id="10_bg"]
+[ext_resource type="Texture2D" path="res://assets/vania10/grave_hook_relic.png" id="11_relic"]
+[ext_resource type="Texture2D" path="res://assets/vania11/railing.png" id="12_rail"]
+
+[sub_resource type="RectangleShape2D" id="floor"]
+size = Vector2(576, 42)
+
+[sub_resource type="RectangleShape2D" id="p1"]
+size = Vector2(180, 12)
+
+[sub_resource type="RectangleShape2D" id="p2"]
+size = Vector2(220, 12)
+
+[sub_resource type="RectangleShape2D" id="door"]
+size = Vector2(28, 86)
+
+[node name="Chain" type="Node2D"]
+script = ExtResource("1_room")
+room_id = "chain"
+room_title = "V. THE CHAIN CRYPT"
+room_size = Vector2(576, 360)
+camera_offset = Vector2(0.0, -18.0)
+camera_zoom = Vector2(1.0, 1.0)
+intro_note = "The Chain Crypt is quiet enough that taking the glowing relic seems almost rude."
+poi_id = ""
+poi_trigger_x = -1
+poi_focus_offset = Vector2(0, 0)
+
+[node name="Background" type="Node2D" parent="."]
+z_index=-20
+[node name="RoomArt" type="Sprite2D" parent="Background"]
+texture=ExtResource("10_bg")
+position=Vector2(288,180)
+[node name="Gameplay" type="Node2D" parent="."]
+[node name="Collision" type="Node2D" parent="Gameplay"]
+
+[node name="Floor" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(288, 339)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/Floor"]
+shape = SubResource("floor")
+
+[node name="HookStep" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(400, 256)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/HookStep"]
+shape = SubResource("p1")
+one_way_collision = true
+one_way_collision_margin = 7.0
+
+[node name="UpperBalcony" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(470, 186)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/UpperBalcony"]
+shape = SubResource("p2")
+one_way_collision = true
+one_way_collision_margin = 7.0
+
+[node name="UpperRail" type="Sprite2D" parent="Gameplay"]
+texture=ExtResource("12_rail")
+position=Vector2(470,180)
+scale=Vector2(2.1,1)
+z_index=2
+[node name="Doors" type="Node2D" parent="Gameplay"]
+
+[node name="Door_left" type="Area2D" parent="Gameplay/Doors"]
+position = Vector2(12, 318)
+script = ExtResource("2_door")
+door_id = "left"
+target_room = "breach"
+target_door = "right"
+direction = "left"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Doors/Door_left"]
+shape = SubResource("door")
+
+[node name="Door_right" type="Area2D" parent="Gameplay/Doors"]
+position = Vector2(564, 174)
+script = ExtResource("2_door")
+door_id = "right"
+target_room = "gate"
+target_door = "crypt_return"
+direction = "right"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Doors/Door_right"]
+shape = SubResource("door")
+
+[node name="SpawnPoints" type="Node2D" parent="."]
+
+[node name="left" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(65, 318)
+
+[node name="right" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(505, 174)
+
+[node name="default" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(65, 318)
+
+[node name="SafePoints" type="Node2D" parent="."]
+
+[node name="Safe0" type="Marker2D" parent="SafePoints"]
+position = Vector2(75, 318)
+
+[node name="Safe1" type="Marker2D" parent="SafePoints"]
+position = Vector2(390, 250)
+
+[node name="Safe2" type="Marker2D" parent="SafePoints"]
+position = Vector2(470, 180)
+
+[node name="EnemySpawns" type="Node2D" parent="."]
+
+[node name="HookBrute" type="Marker2D" parent="EnemySpawns"]
+position = Vector2(480, 318)
+script = ExtResource("4_enemy")
+archetype = 4
+patrol_left = 410
+patrol_right = 540
+elite = false
+phase = 0.25
+
+[node name="BreakableSpawns" type="Node2D" parent="."]
+
+[node name="CandleCrypt" type="Marker2D" parent="BreakableSpawns"]
+position = Vector2(165, 318)
+script = ExtResource("7_break")
+prop_kind = "candle"
+drop_kind = "ash"
+drop_amount = 2
+health = 1
+
+[node name="HookAnchors" type="Node2D" parent="."]
+
+[node name="Anchor_first" type="Marker2D" parent="HookAnchors"]
+position = Vector2(395, 190)
+script = ExtResource("3_anchor")
+anchor_id="crypt_first"
+label="PURPLE WAKE LANTERN"
+landing_offset=Vector2(0,60)
+max_range=190.0
+tutorial_anchor=true
+
+[node name="Anchor_second" type="Marker2D" parent="HookAnchors"]
+position = Vector2(492, 118)
+script = ExtResource("3_anchor")
+anchor_id="crypt_second"
+label="CRYPT BALCONY"
+landing_offset=Vector2(0,62)
+max_range=188.0
+
+[node name="HookPickup" type="Marker2D" parent="Gameplay"]
+position=Vector2(286,306)
+[node name="RelicArt" type="Sprite2D" parent="Gameplay/HookPickup"]
+texture=ExtResource("11_relic")
+position=Vector2(0,-15)
+scale=Vector2(0.8,0.8)
+z_index=5
+[node name="Foreground" type="Node2D" parent="."]
+z_index=12

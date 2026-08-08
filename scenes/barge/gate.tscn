@@ -1,0 +1,156 @@
+[gd_scene load_steps=30 format=3]
+
+[ext_resource type="Script" path="res://scripts/rooms/room_scene.gd" id="1_room"]
+[ext_resource type="Script" path="res://scripts/rooms/door_portal.gd" id="2_door"]
+[ext_resource type="Script" path="res://scripts/rooms/hook_anchor.gd" id="3_anchor"]
+[ext_resource type="Script" path="res://scripts/rooms/enemy_spawn.gd" id="4_enemy"]
+[ext_resource type="Script" path="res://scripts/rooms/hazard_zone.gd" id="5_hazard"]
+[ext_resource type="Script" path="res://scripts/rooms/bone_gate.gd" id="6_gate"]
+[ext_resource type="Script" path="res://scripts/rooms/breakable_spawn.gd" id="7_break"]
+[ext_resource type="Texture2D" path="res://assets/vania07/bone_gate_landing.png" id="10_bg"]
+[ext_resource type="Texture2D" path="res://assets/vania11/hanging_hook.png" id="11_hook"]
+
+[sub_resource type="RectangleShape2D" id="leftfloor"]
+size = Vector2(315, 60)
+
+[sub_resource type="RectangleShape2D" id="rightfloor"]
+size = Vector2(383, 60)
+
+[sub_resource type="RectangleShape2D" id="door"]
+size = Vector2(28, 86)
+
+[sub_resource type="RectangleShape2D" id="hatch"]
+size = Vector2(80, 28)
+
+[sub_resource type="RectangleShape2D" id="gate"]
+size = Vector2(22, 210)
+
+[node name="Gate" type="Node2D"]
+script = ExtResource("1_room")
+room_id = "gate"
+room_title = "III. THE RIB GATE"
+room_size = Vector2(768, 360)
+camera_offset = Vector2(20,-18)
+camera_zoom = Vector2(1.0, 1.0)
+intro_note = "The Rib Gate has one job: make you remember it."
+poi_id = "rib_gate"
+poi_trigger_x = 390
+poi_focus_offset = Vector2(56,0)
+
+[node name="Background" type="Node2D" parent="."]
+z_index=-20
+[node name="RoomArt" type="Sprite2D" parent="Background"]
+texture=ExtResource("10_bg")
+position=Vector2(384,180)
+[node name="Gameplay" type="Node2D" parent="."]
+[node name="Collision" type="Node2D" parent="Gameplay"]
+
+[node name="LeftFloor" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(157.5, 330)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/LeftFloor"]
+shape = SubResource("leftfloor")
+
+[node name="RightFloor" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(576.5, 330)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/RightFloor"]
+shape = SubResource("rightfloor")
+
+[node name="Doors" type="Node2D" parent="Gameplay"]
+
+[node name="Door_left" type="Area2D" parent="Gameplay/Doors"]
+position = Vector2(12, 300)
+script = ExtResource("2_door")
+door_id = "left"
+target_room = "gallery"
+target_door = "right"
+direction = "left"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Doors/Door_left"]
+shape = SubResource("door")
+
+[node name="Door_down" type="Area2D" parent="Gameplay/Doors"]
+position = Vector2(350, 346)
+script = ExtResource("2_door")
+door_id = "down"
+target_room = "breach"
+target_door = "hatch_entry"
+direction = "down"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Doors/Door_down"]
+shape = SubResource("hatch")
+
+[node name="Door_right" type="Area2D" parent="Gameplay/Doors"]
+position = Vector2(756, 300)
+script = ExtResource("2_door")
+door_id = "right"
+target_room = "deck"
+target_door = "left"
+direction = "right"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Doors/Door_right"]
+shape = SubResource("door")
+
+[node name="SpawnPoints" type="Node2D" parent="."]
+
+[node name="left" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(70, 300)
+
+[node name="right" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(690, 300)
+
+[node name="crypt_return" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(625, 300)
+
+[node name="default" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(70, 300)
+
+[node name="SafePoints" type="Node2D" parent="."]
+
+[node name="Safe0" type="Marker2D" parent="SafePoints"]
+position = Vector2(90, 300)
+
+[node name="Safe1" type="Marker2D" parent="SafePoints"]
+position = Vector2(250, 300)
+
+[node name="Safe2" type="Marker2D" parent="SafePoints"]
+position = Vector2(650, 300)
+
+[node name="EnemySpawns" type="Node2D" parent="."]
+
+[node name="CoffinMimic" type="Marker2D" parent="EnemySpawns"]
+position = Vector2(205, 300)
+script = ExtResource("4_enemy")
+archetype = 11
+patrol_left = 180
+patrol_right = 230
+elite = false
+phase = 0.35
+
+[node name="BreakableSpawns" type="Node2D" parent="."]
+
+[node name="UrnGate" type="Marker2D" parent="BreakableSpawns"]
+position = Vector2(650, 300)
+script = ExtResource("7_break")
+prop_kind = "urn"
+drop_kind = "ash"
+drop_amount = 2
+health = 2
+
+[node name="HookAnchors" type="Node2D" parent="."]
+[node name="BoneGate" type="StaticBody2D" parent="Gameplay"]
+position=Vector2(530,195)
+script=ExtResource("6_gate")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/BoneGate"]
+shape=SubResource("gate")
+[node name="HatchHook" type="Sprite2D" parent="Gameplay"]
+texture=ExtResource("11_hook")
+position=Vector2(350,288)
+scale=Vector2(0.65,0.65)
+[node name="Foreground" type="Node2D" parent="."]
+z_index=12

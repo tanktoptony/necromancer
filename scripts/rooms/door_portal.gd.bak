@@ -1,0 +1,78 @@
+class_name RoomDoor
+extends Area2D
+
+signal entered(door: RoomDoor)
+
+@export var door_id: String = "door"
+@export var target_room: String = ""
+@export var target_door: String = "default"
+@export var direction: String = "right"
+@export var locked_by_gate: bool = false
+@export var gate_id: String = ""
+@export var transition_label: String = ""
+
+var enabled: bool = true
+var _cooldown: float = 0.0
+var open_amount: float = 0.0
+var _transition_pending: bool = false
+
+func _ready() -> void:
+	add_to_group("room_doors")
+	collision_layer = 0
+	collision_mask = 2
+	body_entered.connect(_on_body_entered)
+	queue_redraw()
+
+func _process(delta: float) -> void:
+	_cooldown = maxf(0.0, _cooldown - delta)
+
+func arm_delay(seconds: float = 0.35) -> void:
+	_cooldown = seconds
+	enabled = true
+
+func show_arrival_open(seconds: float = 0.42) -> void:
+	open_amount = 1.0
+	queue_redraw()
+	var tween: Tween = create_tween()
+	tween.tween_interval(seconds)
+	tween.tween_method(_set_open_amount, 1.0, 0.0, 0.18)
+
+func _on_body_entered(body: Node2D) -> void:
+	if not enabled or _cooldown > 0.0 or _transition_pending:
+		return
+	if body is NecromancerPlayer:
+		_transition_pending = true
+		enabled = false
+		var tween: Tween = create_tween()
+		tween.set_trans(Tween.TRANS_QUAD)
+		tween.set_ease(Tween.EASE_OUT)
+		tween.tween_method(_set_open_amount, open_amount, 1.0, 0.16)
+		tween.tween_callback(_emit_entered)
+
+func _emit_entered() -> void:
+	entered.emit(self)
+
+func _set_open_amount(value: float) -> void:
+	open_amount = clampf(value, 0.0, 1.0)
+	queue_redraw()
+
+func _draw() -> void:
+	# An intentionally chunky storybook bulkhead/hatch. Art can replace this later without changing portal logic.
+	var frame: Color = Color(0.25, 0.16, 0.10, 0.96)
+	var iron: Color = Color(0.47, 0.39, 0.30, 0.98)
+	var wood: Color = Color(0.13, 0.075, 0.045, 0.98)
+	var gap: Color = Color(0.008, 0.006, 0.012, 0.95)
+	if direction == "down" or direction == "up":
+		draw_rect(Rect2(Vector2(-32.0, -9.0), Vector2(64.0, 18.0)), frame, true)
+		draw_rect(Rect2(Vector2(-28.0, -6.0), Vector2(56.0, 12.0)), gap, true)
+		var panel_x: float = lerpf(-28.0, 31.0, open_amount)
+		draw_rect(Rect2(Vector2(panel_x, -5.0), Vector2(55.0, 10.0)), wood, true)
+		draw_line(Vector2(-32,-10), Vector2(32,-10), iron, 2.0)
+	else:
+		draw_rect(Rect2(Vector2(-13.0, -50.0), Vector2(26.0, 50.0)), frame, true)
+		draw_rect(Rect2(Vector2(-9.0, -46.0), Vector2(18.0, 46.0)), gap, true)
+		var panel_y: float = lerpf(-45.0, -93.0, open_amount)
+		draw_rect(Rect2(Vector2(-8.0, panel_y), Vector2(16.0, 44.0)), wood, true)
+		draw_line(Vector2(-13,-50), Vector2(13,-50), iron, 2.0)
+		draw_line(Vector2(-13,-50), Vector2(-13,0), iron, 2.0)
+		draw_line(Vector2(13,-50), Vector2(13,0), iron, 2.0)

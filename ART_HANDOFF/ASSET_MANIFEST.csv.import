@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://cne7vym6sbsuu"
+
+[deps]
+
+files=["res://ART_HANDOFF/ASSET_MANIFEST.category.translation", "res://ART_HANDOFF/ASSET_MANIFEST.asset.translation", "res://ART_HANDOFF/ASSET_MANIFEST.path.translation", "res://ART_HANDOFF/ASSET_MANIFEST.runtime.translation", "res://ART_HANDOFF/ASSET_MANIFEST.frames.translation", "res://ART_HANDOFF/ASSET_MANIFEST.status.translation", "res://ART_HANDOFF/ASSET_MANIFEST.notes.translation"]
+
+source_file="res://ART_HANDOFF/ASSET_MANIFEST.csv"
+dest_files=["res://ART_HANDOFF/ASSET_MANIFEST.category.translation", "res://ART_HANDOFF/ASSET_MANIFEST.asset.translation", "res://ART_HANDOFF/ASSET_MANIFEST.path.translation", "res://ART_HANDOFF/ASSET_MANIFEST.runtime.translation", "res://ART_HANDOFF/ASSET_MANIFEST.frames.translation", "res://ART_HANDOFF/ASSET_MANIFEST.status.translation", "res://ART_HANDOFF/ASSET_MANIFEST.notes.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

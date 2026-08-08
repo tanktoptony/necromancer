@@ -1,0 +1,22 @@
+PASS: all GDScript block starters have indented bodies
+VANIA PASS 0.11 CONTENT REBUILD AUDIT
+OK: all res:// references resolve
+OK: active slice is six authored compartments
+OK: every active door resolves to a real destination spawn
+OK: player ballistic rise 56.9px
+OK: gallery required jumps fit movement envelope (max 52px)
+OK: breach required jumps fit movement envelope (max 44px)
+OK: Chain Crypt post-relic climb is clearly Hook-gated
+OK: Chain Crypt Hook tutorial is sequential: only intended next anchor is available
+OK: eight visually distinct first-area enemy silhouettes have full frame sets
+OK: 0.11 modular gameplay-art kit present
+OK: raised corpses preserve silhouette metadata and breakables/enemies feed the pickup loop
+OK: combat includes deliberate ground heavy in addition to combo/rising/plunge
+PASS: six-room route, door graph, jump/Hook envelope, roster art, persistence, pickups, and combat contracts
+VANIA PASS 0.11.1 RUNTIME + ART POLICY AUDIT
+OK: manager no longer depends on globally resolved BreakableProp/PickupDrop class names
+OK: breakable/pickup runtime contract remains connected
+OK: no-CSS-art policy and production handoff are present
+OK: stale procedural-art backup scripts removed
+WARNING: map connector lines are still procedural legacy art; replace with map connector sprites before next visual build
+WARNING: Grave Lantern still has procedural selection-glow VFX; world artifact itself is sprite-based, but art handoff requests authored active/selected states

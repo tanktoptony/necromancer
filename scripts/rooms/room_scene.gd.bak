@@ -1,0 +1,60 @@
+class_name BargeRoomScene
+extends Node2D
+
+@export var room_id: String = ""
+@export var room_title: String = ""
+@export var room_size: Vector2 = Vector2(768.0, 360.0)
+@export var camera_offset: Vector2 = Vector2(0.0, -18.0)
+@export var camera_zoom: Vector2 = Vector2.ONE
+@export var intro_note: String = ""
+@export var poi_id: String = ""
+@export var poi_trigger_x: float = -1.0
+@export var poi_focus_offset: Vector2 = Vector2.ZERO
+@export var pit_recovery_y: float = 99999.0
+
+func get_spawn(spawn_id: String) -> Marker2D:
+	var node: Node = get_node_or_null("SpawnPoints/%s" % spawn_id)
+	if node is Marker2D:
+		return node as Marker2D
+	var fallback: Node = get_node_or_null("SpawnPoints/default")
+	if fallback is Marker2D:
+		return fallback as Marker2D
+	return null
+
+func get_doors() -> Array[RoomDoor]:
+	var result: Array[RoomDoor] = []
+	for child: Node in get_tree().get_nodes_in_group("room_doors"):
+		if child is RoomDoor and is_ancestor_of(child):
+			result.append(child as RoomDoor)
+	return result
+
+func get_hook_anchors() -> Array[RoomHookAnchor]:
+	var result: Array[RoomHookAnchor] = []
+	for child: Node in get_tree().get_nodes_in_group("room_hook_anchors"):
+		if child is RoomHookAnchor and is_ancestor_of(child):
+			result.append(child as RoomHookAnchor)
+	return result
+
+func get_enemy_spawns() -> Array[RoomEnemySpawn]:
+	var result: Array[RoomEnemySpawn] = []
+	for child: Node in get_tree().get_nodes_in_group("room_enemy_spawns"):
+		if child is RoomEnemySpawn and is_ancestor_of(child):
+			result.append(child as RoomEnemySpawn)
+	return result
+
+func get_hazards() -> Array[RoomHazard]:
+	var result: Array[RoomHazard] = []
+	for child: Node in get_tree().get_nodes_in_group("room_hazards"):
+		if child is RoomHazard and is_ancestor_of(child):
+			result.append(child as RoomHazard)
+	return result
+
+func get_safe_markers() -> Array[Marker2D]:
+	var result: Array[Marker2D] = []
+	var safe_root: Node = get_node_or_null("SafePoints")
+	if safe_root == null:
+		return result
+	for child: Node in safe_root.get_children():
+		if child is Marker2D:
+			result.append(child as Marker2D)
+	return result

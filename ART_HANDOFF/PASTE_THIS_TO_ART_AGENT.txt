@@ -1,0 +1,23 @@
+You are taking over production sprite/environment art for a Godot 4.7 pixel-art action Metroidvania called NECROMANCER: FIRST DAWN.
+
+Open ART_HANDOFF/README_FIRST.md, SPRITE_PRODUCTION_BRIEF.md, INTEGRATION_CONTRACT.md, ASSET_MANIFEST.csv, and docs/Necromancer_First_Dawn_Production_Direction_v0_9.pdf before changing anything.
+
+CRITICAL RULE: Do not make production-facing art with procedural geometry, SVG/CSS-like shapes, Godot Polygon2D/ColorRect, or programmatically painted placeholder graphics. Return real PNG pixel-art assets with transparent backgrounds where appropriate.
+
+Prioritize:
+1. Lantern Tosser 8-frame 96x80 set.
+2. Purple Grave Lantern world artifact.
+3. Readable modular deck/platform/stair pieces.
+4. Grave Guard, Bilge Crawler, Hook Brute, Bell Keeper.
+5. Castlevania-style parchment map asset family including actual connector sprites.
+6. Hanged Sailor, Bone Crow, Coffin Mimic.
+
+Style: chunky expressive pixel art; gothic Halloween/graveyard storybook; spooky-adventurous rather than oppressive; warm orange mundane lanterns versus violet necromancy; current player art has a Metal Slug-ish cartoon readability but the game is NOT paced like Metal Slug.
+
+Keep file paths and 96x80 enemy frame contract exactly as documented. Raised enemies reuse the hostile silhouette with runtime necromantic tint, so each hostile design must still read well tinted green/mint.
+
+Return:
+- ZIP preserving project-relative file paths,
+- CHANGED_ASSETS.md,
+- contact sheet preview of all produced assets,
+- no gameplay-code edits unless strictly required for animation-frame count and explicitly documented.

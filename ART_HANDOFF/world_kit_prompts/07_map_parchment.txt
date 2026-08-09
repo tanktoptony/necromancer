@@ -1,0 +1,30 @@
+PROJECT: Necromancer: First Dawn (gothic Halloween storybook pixel-art
+Metroidvania on a plague/corpse barge).
+
+CURRENT PROBLEM: res://assets/vania10/map_parchment.png is currently a
+completely flat solid tan rectangle with a plain dark border — there is no
+parchment texture, no aging, no ink-stain detail at all, despite this being
+the full-screen background for the in-game map. It looks like an empty
+placeholder panel, not a "ship's log parchment."
+
+TARGET: production pixel art, exactly 600x330 pixels, opaque or transparent
+PNG (this is a full background panel, opaque is fine).
+
+WHAT IT IS: the background for the Castlevania-style in-game map overlay —
+should feel like a hand-drawn ship's log page, not a UI panel.
+
+DIRECTION:
+- Aged parchment/paper texture: visible grain/fiber noise, uneven tone
+  (subtle blotches, not perfectly flat color), maybe a few faint stains or
+  darkened edges/corners for a "well-used ship's log" feel.
+- Keep a dark ink-brown border frame similar to the current one (that part
+  is fine), but the interior fill needs real paper texture instead of a flat
+  color.
+- Should stay light enough in the middle that dark ink-colored room tiles
+  and text (drawn in code on top of this background) remain readable —
+  don't make it so busy/dark that map UI elements disappear into it.
+- Pixel-art texture, not a photo-scanned paper texture — hand-authored
+  pixel noise/grain, matching the chunky style of the rest of the game.
+
+DELIVERY PATH: res://assets/vania10/map_parchment.png (600x330, replace
+exactly)

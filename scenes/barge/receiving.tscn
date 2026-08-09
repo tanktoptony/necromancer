@@ -13,6 +13,9 @@
 [sub_resource type="RectangleShape2D" id="floor"]
 size = Vector2(768, 60)
 
+[sub_resource type="RectangleShape2D" id="leftwall"]
+size = Vector2(20, 400)
+
 [sub_resource type="RectangleShape2D" id="door"]
 size = Vector2(28, 86)
 
@@ -43,6 +46,14 @@ collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/Floor"]
 shape = SubResource("floor")
+
+[node name="LeftWall" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(-10, 180)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/LeftWall"]
+shape = SubResource("leftwall")
 
 [node name="Doors" type="Node2D" parent="Gameplay"]
 

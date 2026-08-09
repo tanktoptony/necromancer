@@ -1,0 +1,32 @@
+REFERENCE FOR QUALITY BAR: res://assets/vania11/platform_module.png or any
+res://assets/sprites/enemy_types/ frame — chunky hand-shaded pixel art with
+real highlight/midtone/shadow bands, not a flat icon.
+
+PROJECT: Necromancer: First Dawn (gothic Halloween storybook pixel-art
+Metroidvania on a plague/corpse barge).
+
+CURRENT PROBLEM: res://assets/vania11/flesh_pickup.png is currently a flat,
+single-tone red heart shape — reads as a generic health-bar UI icon, not a
+found object in the world, and clashes with the detailed art around it.
+
+TARGET: production pixel art, exactly 20x20 pixels, transparent PNG
+background.
+
+WHAT IT IS: the game's health pickup, dropped from breakable urns. The
+project brief explicitly wants this "readable without gore-realism" — it
+should read as flesh/health restoration WITHOUT being a literal gory chunk.
+
+DIRECTION:
+- A small wrapped/preserved morsel — think a bundled cut of salted meat, a
+  small preserved organ in a jar-less wrapped form, or a stylized dark-red
+  flesh shape with visible pixel shading (not the flat cartoon-heart icon
+  currently there).
+- Real material shading: a few distinct tone bands (dark red/maroon base,
+  a warm highlight), plus maybe a thin string/wrap detail if using the
+  "bundled meat" direction.
+- Should NOT read as a UI heart icon — that's exactly the flat placeholder
+  problem being fixed.
+- Spooky-adventurous tone, not visceral/gross.
+- No text, no border, no drop shadow baked in.
+
+DELIVERY PATH: res://assets/vania11/flesh_pickup.png (20x20, replace exactly)

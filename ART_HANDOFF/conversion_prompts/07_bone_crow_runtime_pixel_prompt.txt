@@ -1,0 +1,56 @@
+REFERENCE IMAGE
+`res://ART_HANDOFF/references/bone_crow_concept_sheet.png`
+
+PROJECT: Necromancer: First Dawn
+TARGET: production runtime pixel art, NOT concept art.
+
+HARD RUNTIME CONTRACT
+- Deliver exactly 10 separate transparent PNG files.
+- Each file MUST be exactly 96x80 pixels.
+- Filenames MUST be: enemy_0.png through enemy_9.png.
+- Hard-edged authored pixel art. No painterly brushwork, no soft airbrush shading, no semi-realistic render, no anti-aliased silhouette edges, no CSS/procedural-looking geometry.
+- Keep a coherent small runtime palette and clusters of deliberate pixels. It should sit beside the existing player sprite without looking downsampled from a painting.
+- Preserve the chunky gothic-Halloween storybook identity and readable silhouettes.
+- Orange = mundane lantern/fire light. Violet = necromancy/occult energy.
+- Left/right is handled by Godot sprite flip; draw one facing direction consistently.
+- Keep the character fully inside each 96x80 frame with several pixels of safety around the silhouette.
+- Maintain consistent visual scale and anchor placement across all 8 frames. Grounded humanoids should share a stable foot baseline near the bottom of the frame. Flying enemies should share a stable body center instead.
+- No labels, borders, grids, UI, backgrounds, drop shadows, or captions in final exported frames.
+
+FRAME ORDER REQUIRED BY GAME
+0 = dead
+1 = hurt / rise-react frame
+2 = idle A
+3 = idle B
+4 = movement A (walk/fly contact pose 1)
+5 = movement B (walk/fly passing pose 1)
+6 = attack windup
+7 = attack release
+8 = movement C (contact pose 2, opposite side from frame 4)
+9 = movement D (passing pose 2, opposite side from frame 5)
+
+IMPORTANT: frames 4, 5, 8, 9 together form ONE continuous 4-pose movement
+cycle, played back in the order 4 -> 5 -> 8 -> 9 -> loop. Frames 6/7 (attack)
+sit between them only in file-index order, not in playback order. Draw frames
+8/9 as the natural continuation of the stride/wingbeat started in 4/5 (mirror
+leg/wing), not as anything related to the attack pose.
+
+The reference image establishes design, silhouette, props, palette, and personality only. Redraw it as crisp production pixel art; do not simply resize/downsample the reference.
+
+ARCHETYPE-SPECIFIC DIRECTION
+Bone Crow — airborne skeletal crow with dark blue-black feathers/bone structure and small violet necromantic eyes/trace. Keep it compact and sharp; do not turn it into a large realistic raven. Its runtime uses movement frames as flight frames.
+
+Frame specifics:
+0 dead: fallen crumpled bird/body, wings collapsed.
+1 hurt/rise-react: airborne recoil/twist, wings uneven.
+2 idle A: perch/hover-rest posture.
+3 idle B: alternate perch/hover with head/wing twitch.
+4 movement A: flap upstroke.
+5 movement B: flap downstroke, clearly distinct silhouette.
+8 movement C: upstroke recovery, wings resetting toward frame 4's position but not identical.
+9 movement D: second downstroke, completing a full four-beat wing cycle.
+6 attack windup: dive preparation with body angled and wings drawn for commitment.
+7 attack release: aggressive dive/peck strike, body elongated into attack direction.
+
+DELIVERY PATH
+`res://assets/sprites/enemy_types/bone_crow/enemy_0.png` through `enemy_9.png`

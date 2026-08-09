@@ -1,0 +1,29 @@
+REFERENCE: res://assets/sprites/guard/guard_5.png, guard_6.png — the
+starting guard's existing 2-frame run cycle. This is good, finished art;
+match it exactly (same character, same palette, same pixel scale, same
+96x80 canvas). This is a continuation of an existing animation, NOT a
+redesign.
+
+PROJECT: Necromancer: First Dawn — this is the one un-raised ally NPC found
+dead at the very start of the game (before any hostile corpse gets raised
+into the army), a plain guard in life who now needs to be resurrected by the
+player. Distinct from the enemy-sourced raised allies, which use their own
+separate sprite sets.
+
+CURRENT STATE: this guard's run cycle uses frames guard_5, guard_6 (in that
+playback order) as a 2-pose stride. The game now supports a 4-pose cycle
+(adding guard_8.png, guard_9.png) to complete it, but those frames don't
+exist yet.
+
+TARGET: TWO new frames, guard_8.png and guard_9.png, each exactly 96x80
+pixels, transparent PNG, same horizontal center (x=48) and foot baseline
+(y=74) as every other guard frame in this set.
+
+WHAT'S NEEDED: playback order will be 5 -> 6 -> 8 -> 9 -> loop, so frames 8
+and 9 should continue the stride established by 5/6 (opposite leg forward,
+completing a full gait cycle), not repeat either existing pose.
+- guard_8: contact pose, mirrored leg from frame 5.
+- guard_9: passing pose, completing the cycle before it loops back to 5.
+
+DELIVERY PATH: res://assets/sprites/guard/guard_8.png and guard_9.png
+(96x80 each, new files — do not touch guard_0 through guard_7)

@@ -1,0 +1,32 @@
+REFERENCE FOR QUALITY BAR: res://assets/vania11/platform_module.png and
+res://assets/vania11/deck_trim.png — real wood-grain/metal texture with
+shading bands, not a flat fill.
+
+PROJECT: Necromancer: First Dawn (gothic Halloween storybook pixel-art
+Metroidvania on a plague/corpse barge).
+
+CURRENT PROBLEM: res://assets/vania11/stairs.png is currently flat solid-color
+step blocks with a thin lighter line on the top edges — no wood/material
+texture, no shading, reads as an unfinished placeholder next to the detailed
+platform art.
+
+TARGET: production pixel art, exactly 96x64 pixels, transparent PNG
+background. The shape is a staircase silhouette (ascending steps, currently
+4-5 steps rising left-to-right based on the existing placeholder layout —
+keep a similar step count/proportions since gameplay collision is tuned to
+the current silhouette).
+
+WHAT IT IS: a traversable wooden/timber stairway module used as a normal
+walkable surface on the barge.
+
+DIRECTION:
+- Real timber material: visible plank grain, a distinct highlighted top-tread
+  edge (players need to instantly read which surface is standable), and
+  shadow on each riser face.
+- Match the construction language of platform_module.png / deck_trim.png
+  (same wood tone family, same rivet/joint details) so it reads as part of
+  the same ship kit, not a different building material.
+- Keep the top of each step visually distinct/brighter than the riser faces
+  — that readability rule matters more than realism here.
+
+DELIVERY PATH: res://assets/vania11/stairs.png (96x64, replace exactly)

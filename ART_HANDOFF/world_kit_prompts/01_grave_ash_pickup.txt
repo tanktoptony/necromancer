@@ -1,0 +1,30 @@
+REFERENCE FOR QUALITY BAR: res://assets/vania11/platform_module.png or any
+res://assets/sprites/enemy_types/ frame — chunky hand-shaded pixel art with
+real highlight/midtone/shadow bands, not a flat icon.
+
+PROJECT: Necromancer: First Dawn (gothic Halloween storybook pixel-art
+Metroidvania on a plague/corpse barge).
+
+CURRENT PROBLEM: res://assets/vania11/grave_ash.png is currently a flat,
+single-tone purple diamond/gem shape with almost no shading — it reads as a
+UI icon, not a world pickup, and clashes badly next to the detailed enemy and
+platform art in the same scene.
+
+TARGET: production pixel art, exactly 20x20 pixels, transparent PNG
+background.
+
+WHAT IT IS: a small pile/clump of magically-charged grave ash — the currency
+players collect from broken breakables and defeated corpses ("grave ash" is
+spent narratively as loyalty/recruitment currency for the raised-dead army).
+
+DIRECTION:
+- Read as a small heap of ash/dust with a violet necromantic glow or ember
+  inside it — not a gemstone, not a coin, not a crystal.
+- Real pixel shading: a darker ash-grey/charcoal base with visible texture
+  (a few distinct lighter/darker pixel clusters, not a smooth gradient),
+  plus a violet inner glow (2-3 tone highlight, echoing the Grave Hook's
+  necromancy color).
+- Small silhouette but still readable as "ash," not an abstract icon.
+- No text, no border, no drop shadow baked in.
+
+DELIVERY PATH: res://assets/vania11/grave_ash.png (20x20, replace exactly)

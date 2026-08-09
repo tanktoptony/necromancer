@@ -2,7 +2,7 @@ class_name RaisedGuard
 extends CharacterBody2D
 
 signal lost(guard)
-signal projectile_requested(origin: Vector2, direction: Vector2, speed: float, damage: int)
+signal projectile_requested(origin: Vector2, direction: Vector2, speed: float, damage: int, visual_kind: String)
 signal damaged(position: Vector2, amount: int, heavy: bool)
 
 enum Role { GUARD, BRUTE, SENTRY }
@@ -29,6 +29,9 @@ var hurt_time: float = 0.0
 var follow_slot: int = 0
 var body_collision: CollisionShape2D
 var sprite: AnimatedSprite2D
+var sprite_base_position: Vector2 = Vector2.ZERO
+var sprite_base_scale: Vector2 = Vector2.ONE
+var walk_cycle_phase: float = 0.0
 var stuck_time: float = 0.0
 var last_position: Vector2 = Vector2.ZERO
 var jump_cooldown: float = 0.0
@@ -93,7 +96,7 @@ func _build_sprite() -> void:
 			"dead": {"frames": [0], "fps": 1.0, "loop": false},
 			"rise": {"frames": [0, 1, 2], "fps": 6.0, "loop": false},
 			"idle": {"frames": [2, 3], "fps": 2.5, "loop": true},
-			"run": {"frames": [4, 5], "fps": 7.0, "loop": true},
+			"run": {"frames": [4, 5, 8, 9], "fps": 14.0, "loop": true},
 			"attack": {"frames": [6, 7], "fps": 7.0, "loop": false}
 		}
 	else:
@@ -101,7 +104,7 @@ func _build_sprite() -> void:
 			"dead": {"frames": [0], "fps": 1.0, "loop": false},
 			"rise": {"frames": [1, 2], "fps": 5.0, "loop": false},
 			"idle": {"frames": [3, 4], "fps": 2.5, "loop": true},
-			"run": {"frames": [5, 6], "fps": 7.5, "loop": true},
+			"run": {"frames": [5, 6, 8, 9], "fps": 15.0, "loop": true},
 			"attack": {"frames": [7], "fps": 1.0, "loop": false}
 		}
 	sprite.sprite_frames = FrameLibrary.build_frames(folder, "enemy" if source_archetype >= 0 else "guard", animations)
@@ -115,6 +118,8 @@ func _build_sprite() -> void:
 		sprite.modulate = Color(0.66, 1.0, 0.82, 1.0)
 	else:
 		sprite.modulate = Color(0.78, 0.93, 0.84, 1.0)
+	sprite_base_position = sprite.position
+	sprite_base_scale = sprite.scale
 	add_child(sprite)
 	sprite.play("idle" if resurrected else "dead")
 
@@ -232,7 +237,7 @@ func _physics_process_crow_follower(delta: float) -> void:
 		var difference: Vector2 = target_enemy.global_position - global_position
 		if attack_cooldown <= 0.0 and difference.length() <= 205.0 and _has_line_of_sight(target_enemy.global_position):
 			var aim: Vector2 = (target_enemy.global_position + target_enemy.velocity * 0.12 - global_position).normalized()
-			projectile_requested.emit(global_position, aim, 215.0, 1)
+			projectile_requested.emit(global_position, aim, 215.0, 1, "bolt")
 			attack_cooldown = 1.2 + float(follow_slot) * 0.08
 	var desired_velocity: Vector2 = (desired - global_position).limit_length(105.0) * 1.25
 	velocity = velocity.move_toward(desired_velocity, 420.0 * delta)
@@ -309,7 +314,8 @@ func _commit_pending_attack() -> void:
 		Role.SENTRY:
 			if absf(difference.x) >= 70.0 and absf(difference.x) <= 190.0 and absf(difference.y) <= 90.0 and _has_line_of_sight(enemy.global_position):
 				var aim: Vector2 = (enemy.global_position + enemy.velocity * 0.16 - global_position).normalized()
-				projectile_requested.emit(global_position + Vector2(facing * 10.0, -25.0), aim, 205.0, 1)
+				var kind: String = "lantern" if source_archetype == RaggedEnemy.Archetype.LANTERN_TOSSER else "bolt"
+				projectile_requested.emit(global_position + Vector2(facing * 10.0, -25.0), aim, 205.0, 1, kind)
 			attack_cooldown = 1.45 + float(follow_slot) * 0.08
 			attack_recovery = 0.34
 		Role.BRUTE:
@@ -575,6 +581,18 @@ func _update_animation(target_enemy: RaggedEnemy) -> void:
 		sprite.speed_scale = clampf(absf(velocity.x) / maxf(_follow_speed(), 1.0), 0.45, 1.15)
 	else:
 		sprite.speed_scale = 1.0
+
+	# Same procedural bob/squash as enemies, layered on top of the sprite frames
+	# to sell stride weight that the current 2-frame walk art can't carry alone.
+	if absf(velocity.x) > 8.0:
+		walk_cycle_phase = fmod(walk_cycle_phase + absf(velocity.x) * get_physics_process_delta_time() * 0.25, TAU)
+		var bob: float = sin(walk_cycle_phase) * 3.2
+		var squash: float = sin(walk_cycle_phase) * 0.07
+		sprite.position = sprite_base_position + Vector2(0.0, bob)
+		sprite.scale = sprite_base_scale * Vector2(1.0 - squash, 1.0 + squash)
+	else:
+		sprite.position = sprite_base_position
+		sprite.scale = sprite_base_scale
 
 func can_be_raised() -> bool:
 	return not resurrected

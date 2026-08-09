@@ -43,6 +43,9 @@ var e_was_down: bool = false
 var q_was_down: bool = false
 var c_was_down: bool = false
 var sprite: AnimatedSprite2D
+var sprite_base_position: Vector2 = Vector2.ZERO
+var sprite_base_scale: Vector2 = Vector2.ONE
+var walk_cycle_phase: float = 0.0
 var hooking: bool = false
 var hook_target: Vector2 = Vector2.ZERO
 var hook_time: float = 0.0
@@ -73,7 +76,7 @@ func _build_sprite() -> void:
 	sprite.position = Vector2(0.0, -34.0)
 	var animations: Dictionary = {
 		"idle": {"frames": [0, 1], "fps": 2.5, "loop": true},
-		"run": {"frames": [2, 3, 4], "fps": 10.0, "loop": true},
+		"run": {"frames": [2, 3, 4, 8], "fps": 12.0, "loop": true},
 		"jump": {"frames": [5], "fps": 1.0, "loop": false},
 		"attack": {"frames": [6, 7], "fps": 11.0, "loop": false}
 	}
@@ -82,6 +85,8 @@ func _build_sprite() -> void:
 		"player",
 		animations
 	)
+	sprite_base_position = sprite.position
+	sprite_base_scale = sprite.scale
 	add_child(sprite)
 	sprite.play("idle")
 
@@ -106,6 +111,20 @@ func _physics_process(delta: float) -> void:
 		hook_aim_released.emit(hook_aim_direction)
 		hook_aiming = false
 	q_was_down = q_down
+
+	# Edge-tracked every frame, even while hooking/ritual/aiming lock out other input,
+	# so a key held through one of those states doesn't read as a fresh press on release.
+	var jump_down: bool = Input.is_key_pressed(KEY_SPACE) or Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP)
+	var jump_just_pressed: bool = jump_down and not jump_was_down
+	jump_was_down = jump_down
+
+	var attack_down: bool = Input.is_key_pressed(KEY_F) or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+	var attack_just_pressed: bool = attack_down and not attack_was_down
+	attack_was_down = attack_down
+
+	var c_down: bool = Input.is_key_pressed(KEY_C)
+	var c_just_pressed: bool = c_down and not c_was_down
+	c_was_down = c_down
 
 	if hooking:
 		_hook_motion(delta)
@@ -162,19 +181,15 @@ func _physics_process(delta: float) -> void:
 		velocity.x = move_toward(velocity.x, 0.0, drag * delta)
 
 	jump_buffer_time = maxf(0.0, jump_buffer_time - delta)
-	var jump_down: bool = Input.is_key_pressed(KEY_SPACE) or Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP)
-	if can_control and health > 0 and jump_down and not jump_was_down:
+	if can_control and health > 0 and jump_just_pressed:
 		jump_buffer_time = JUMP_BUFFER_TIME
 	if can_control and health > 0 and jump_buffer_time > 0.0 and coyote_time > 0.0:
 		velocity.y = JUMP_VELOCITY
 		coyote_time = 0.0
 		jump_buffer_time = 0.0
-	jump_was_down = jump_down
 
-	var attack_down: bool = Input.is_key_pressed(KEY_F) or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
-	if can_control and health > 0 and attack_down and not attack_was_down:
+	if can_control and health > 0 and attack_just_pressed:
 		_request_attack()
-	attack_was_down = attack_down
 
 	if can_control and health > 0 and e_just_pressed and not ritual_channeling:
 		interact_requested.emit()
@@ -182,10 +197,8 @@ func _physics_process(delta: float) -> void:
 	if can_control and health > 0 and q_just_pressed and not hook_aiming:
 		hook_requested.emit()
 
-	var c_down: bool = Input.is_key_pressed(KEY_C)
-	if can_control and health > 0 and c_down and not c_was_down:
+	if can_control and health > 0 and c_just_pressed:
 		command_requested.emit()
-	c_was_down = c_down
 
 	if direction != 0.0:
 		_try_ledge_assist(direction)
@@ -376,6 +389,18 @@ func _update_animation() -> void:
 		sprite.play("idle")
 	if not ritual_channeling:
 		sprite.speed_scale = 1.0
+
+	# Lighter version of the enemy/ally bob: the player's run already has more
+	# real frames, this just adds a bit of extra stride weight on top.
+	if is_on_floor() and not hooking and not ritual_channeling and not hook_aiming and absf(velocity.x) > 12.0:
+		walk_cycle_phase = fmod(walk_cycle_phase + absf(velocity.x) * get_physics_process_delta_time() * 0.25, TAU)
+		var bob: float = sin(walk_cycle_phase) * 1.8
+		var squash: float = sin(walk_cycle_phase) * 0.045
+		sprite.position = sprite_base_position + Vector2(0.0, bob)
+		sprite.scale = sprite_base_scale * Vector2(1.0 - squash, 1.0 + squash)
+	else:
+		sprite.position = sprite_base_position
+		sprite.scale = sprite_base_scale
 
 	var flashing: bool = hurt_time > 0.0 and int(hurt_time * 24.0) % 2 == 0
 	sprite.modulate = Color(1.0, 0.55, 0.55, 1.0) if flashing else Color.WHITE

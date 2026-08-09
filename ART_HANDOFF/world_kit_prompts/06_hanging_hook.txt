@@ -1,0 +1,29 @@
+REFERENCE FOR QUALITY BAR: res://assets/vania11/grave_lantern_chunky.png —
+similar small hanging-hardware prop, done well (real shading, weight, a
+sense of metal thickness). This asset should match that.
+
+PROJECT: Necromancer: First Dawn (gothic Halloween storybook pixel-art
+Metroidvania on a plague/corpse barge).
+
+CURRENT PROBLEM: res://assets/vania11/hanging_hook.png is currently thin and
+underdetailed compared to the rest of the world-kit — reads as a rough sketch
+rather than finished set dressing.
+
+TARGET: production pixel art, exactly 40x56 pixels, transparent PNG
+background.
+
+WHAT IT IS: ship hardware set dressing — a heavy iron cargo/butcher hook
+hanging from a chain, used as ambient prop detail (NOT the Grave Hook
+artifact itself, NOT a UI symbol — the brief explicitly wants prop hardware
+here, "ship hardware not UI symbol").
+
+DIRECTION:
+- A genuinely heavy-looking iron hook with real thickness — chunky metal
+  shading (dark iron base, a cold highlight along one edge, some rust/wear
+  texture).
+- Chain/rope attachment at top with real link or braid detail, not a single
+  thin line.
+- Should feel like it belongs on the same ship as the Hook Brute's weapon
+  and the bulkhead door's hinges — same metal material language.
+
+DELIVERY PATH: res://assets/vania11/hanging_hook.png (40x56, replace exactly)

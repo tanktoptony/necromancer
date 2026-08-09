@@ -21,6 +21,24 @@ var checkpoint_local_position: Vector2 = Vector2(288.0, 318.0)
 var current_room_id: String = "receiving"
 var slice_complete: bool = false
 var discovered_rooms: Dictionary = {"receiving": true}
+var enemy_clear_state: Dictionary = {}
+
+func mark_enemy_killed(room_id: String, spawn_key: String) -> void:
+	if spawn_key.is_empty():
+		return
+	var key: String = "%s/%s" % [room_id, spawn_key]
+	if enemy_clear_state.get(key, "") != "raised":
+		enemy_clear_state[key] = "killed"
+
+func mark_enemy_raised(room_id: String, spawn_key: String) -> void:
+	if spawn_key.is_empty():
+		return
+	enemy_clear_state["%s/%s" % [room_id, spawn_key]] = "raised"
+
+func enemy_clear_status(room_id: String, spawn_key: String) -> String:
+	if spawn_key.is_empty():
+		return ""
+	return str(enemy_clear_state.get("%s/%s" % [room_id, spawn_key], ""))
 
 func reset_run() -> void:
 	max_health = BASE_MAX_HEALTH
@@ -41,6 +59,7 @@ func reset_run() -> void:
 	current_room_id = "receiving"
 	slice_complete = false
 	discovered_rooms = {"receiving": true}
+	enemy_clear_state.clear()
 
 func restart_room() -> void:
 	player_health = max_health

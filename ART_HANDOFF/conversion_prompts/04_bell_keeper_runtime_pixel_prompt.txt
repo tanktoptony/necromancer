@@ -1,0 +1,56 @@
+REFERENCE IMAGE
+`res://ART_HANDOFF/references/bell_keeper_concept_sheet.png`
+
+PROJECT: Necromancer: First Dawn
+TARGET: production runtime pixel art, NOT concept art.
+
+HARD RUNTIME CONTRACT
+- Deliver exactly 10 separate transparent PNG files.
+- Each file MUST be exactly 96x80 pixels.
+- Filenames MUST be: enemy_0.png through enemy_9.png.
+- Hard-edged authored pixel art. No painterly brushwork, no soft airbrush shading, no semi-realistic render, no anti-aliased silhouette edges, no CSS/procedural-looking geometry.
+- Keep a coherent small runtime palette and clusters of deliberate pixels. It should sit beside the existing player sprite without looking downsampled from a painting.
+- Preserve the chunky gothic-Halloween storybook identity and readable silhouettes.
+- Orange = mundane lantern/fire light. Violet = necromancy/occult energy.
+- Left/right is handled by Godot sprite flip; draw one facing direction consistently.
+- Keep the character fully inside each 96x80 frame with several pixels of safety around the silhouette.
+- Maintain consistent visual scale and anchor placement across all 8 frames. Grounded humanoids should share a stable foot baseline near the bottom of the frame. Flying enemies should share a stable body center instead.
+- No labels, borders, grids, UI, backgrounds, drop shadows, or captions in final exported frames.
+
+FRAME ORDER REQUIRED BY GAME
+0 = dead
+1 = hurt / rise-react frame
+2 = idle A
+3 = idle B
+4 = movement A (walk/fly contact pose 1)
+5 = movement B (walk/fly passing pose 1)
+6 = attack windup
+7 = attack release
+8 = movement C (contact pose 2, opposite side from frame 4)
+9 = movement D (passing pose 2, opposite side from frame 5)
+
+IMPORTANT: frames 4, 5, 8, 9 together form ONE continuous 4-pose movement
+cycle, played back in the order 4 -> 5 -> 8 -> 9 -> loop. Frames 6/7 (attack)
+sit between them only in file-index order, not in playback order. Draw frames
+8/9 as the natural continuation of the stride/wingbeat started in 4/5 (mirror
+leg/wing), not as anything related to the attack pose.
+
+The reference image establishes design, silhouette, props, palette, and personality only. Redraw it as crisp production pixel art; do not simply resize/downsample the reference.
+
+ARCHETYPE-SPECIFIC DIRECTION
+Bell Keeper — eerie support enemy. Robed, hooded, violet eyes, hand bell/staff motif. The bell itself may have mundane metal/warm highlights, but occult ring/haze from the ability should be violet. Silhouette should be taller and more ritualistic than Lantern Tosser.
+
+Frame specifics:
+0 dead: robes collapsed, bell on deck, violet eyes extinguished.
+1 hurt/rise-react: body twists/recoils; bell pulled off-line.
+2 idle A: stooped ritual stance, bell down.
+3 idle B: bell slightly raised / head tilt with violet eyes visible.
+4 movement A: slow shuffling step.
+5 movement B: opposite shuffle, robes trailing differently.
+8 movement C: shuffle continues, mirrored leg from frame 4, bell sways further.
+9 movement D: robes settle back, completing the slow processional gait.
+6 attack windup: bell raised, violet energy beginning to gather tightly around hand/bell.
+7 attack release: bell ring/cast release with compact violet ring/burst integrated into sprite frame; do not fill the whole 96x80 canvas with fog.
+
+DELIVERY PATH
+`res://assets/sprites/enemy_types/bell_keeper/enemy_0.png` through `enemy_9.png`

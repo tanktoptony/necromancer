@@ -1,0 +1,32 @@
+REFERENCE FOR QUALITY BAR: res://assets/vania11/platform_module.png and
+res://assets/vania11/platform_trim.png — real wood-grain/metal texture with
+shading bands, not a flat fill.
+
+PROJECT: Necromancer: First Dawn (gothic Halloween storybook pixel-art
+Metroidvania on a plague/corpse barge).
+
+CURRENT PROBLEM: res://assets/vania11/railing.png is currently a literal flat
+brown rectangle with a handful of straight vertical lines through it — no
+shading, no material read at all. It tiles as foreground dressing on ship
+decks and reads as an unfinished placeholder next to the detailed platform
+art.
+
+TARGET: production pixel art, exactly 96x40 pixels, transparent PNG
+background, designed to tile/repeat horizontally as a foreground dressing
+strip (it sits in front of the play area, not part of collision).
+
+WHAT IT IS: a weathered wrought-iron or ship-timber deck railing —
+foreground atmosphere dressing on the barge's exposed decks.
+
+DIRECTION:
+- Real material: either dark wrought iron with rust/highlight variation, or
+  aged ship timber with visible grain and a top handrail cap — pick
+  whichever reads more "corpse barge" (rust/iron is probably the stronger
+  fit given the Hull Breach / Ossuary Deck settings).
+- Posts/balusters should have actual shading (highlight on the light side,
+  shadow on the dark side), not a flat silhouette.
+- Should read clearly as something the player is looking THROUGH (foreground
+  dressing), so keep enough negative space between posts.
+- Design it to tile cleanly if repeated left-to-right.
+
+DELIVERY PATH: res://assets/vania11/railing.png (96x40, replace exactly)

@@ -1,0 +1,42 @@
+PROJECT: Necromancer: First Dawn (gothic Halloween storybook pixel-art
+Metroidvania on a plague/corpse barge).
+
+CURRENT PROBLEM: this asset family doesn't exist yet at all. The in-game map
+(scripts/map_overlay.gd, function _draw_connections()) currently draws the
+lines connecting rooms using Godot's procedural draw_line()/draw_circle() —
+plain code-drawn lines, not art. This is the single biggest remaining gap in
+the map's visual consistency with the rest of the game (which uses zero
+procedural "UI shape" art everywhere else).
+
+TARGET: a small connector sprite family, transparent PNG, matching the
+existing map tile grid (each room cell is 18x18 pixels — see
+res://assets/vania10/map_room_explored.png / map_room_current.png for the
+exact tile scale and ink-line art style to match).
+
+WHAT'S NEEDED (each a separate small PNG, sized to align with the 18px grid):
+1. Horizontal connector segment — a straight route line between two
+   horizontally-adjacent room cells.
+2. Vertical connector segment — same, for vertically-adjacent cells.
+3. Corner/turn connector — one 90-degree turn orientation (the map code will
+   flip/rotate it as needed for other corners).
+4. A distinct "sealed gate" variant of the connector — the route between the
+   Rib Gate and Ossuary Deck looks different depending on whether the gate
+   has been opened yet; needs a visually-locked look (chain/X-mark/darker
+   ink) versus the normal open-route look.
+
+DIRECTION:
+- Match the ink-on-parchment linework style of the existing room tiles —
+  hand-drawn-looking pixel ink lines, NOT smooth vector lines, NOT a flat
+  colored bar.
+- Should read as "hand-drawn ship's-log route markings," consistent with
+  the parchment map background (see the companion 07_map_parchment.txt
+  prompt in this same folder — these should look like they belong on the
+  same page).
+- Keep segments simple enough to tile/chain together across multiple grid
+  cells without visible seams.
+
+DELIVERY PATH: place new files under res://assets/vania10/ (matching the
+existing map asset location) or a new res://assets/vania12/map_connectors/
+folder — either is fine, just list the exact paths used in
+CHANGED_ASSETS.md so the connecting code (map_overlay.gd) can be updated to
+load them.

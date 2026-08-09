@@ -1,0 +1,34 @@
+REFERENCE FOR QUALITY BAR: res://assets/vania10/bulkhead_door.png — this is
+the other large obstruction object in the game and it's done well (real
+shading, rivets, wood-grain, weight). The Rib Gate should match that same
+level of finish; right now it does not.
+
+PROJECT: Necromancer: First Dawn (gothic Halloween storybook pixel-art
+Metroidvania on a plague/corpse barge).
+
+CURRENT PROBLEM: res://assets/vania11/rib_gate.png is currently pale, thin
+bone/rib shapes with almost no shading and no background/frame detail — it
+looks like an unfinished sketch sitting next to the much more finished
+bulkhead door in the same room.
+
+TARGET: production pixel art, exactly 72x220 pixels, transparent PNG
+background. Tall vertical obstruction (fits a narrow gate opening).
+
+WHAT IT IS: a major story obstacle — a gate fused from bone and iron blocking
+the route between the Rib Gate room and the Ossuary Deck. It's sealed until
+the player acquires the Grave Hook, which then tears it open (a
+`open_gate()` animation tweens it apart/away — the art doesn't need multiple
+states, just needs to read as strong enough to be a real obstacle).
+
+DIRECTION:
+- Ribs/bones fused into the ship's bulkhead structure with actual iron
+  bracing/rivets holding them in place — needs to read as "installed
+  architecture," not loose bones.
+- Real shading: bone should have warm ivory highlights and grey-brown
+  shadow, iron braces should have the same metal language as the bulkhead
+  door's hinges.
+- Should feel imposing and load-bearing — this gate is a major story beat,
+  the art should carry that weight.
+- Keep it readable as a distinct silhouette against dark room backgrounds.
+
+DELIVERY PATH: res://assets/vania11/rib_gate.png (72x220, replace exactly)

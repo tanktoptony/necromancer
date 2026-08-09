@@ -1,0 +1,25 @@
+REFERENCE: res://assets/sprites/player/player_2.png, player_3.png,
+player_4.png — the player's existing 3-frame run cycle. This is good,
+finished art; match it exactly (same character, same palette, same pixel
+scale, same 96x80 canvas). This is a continuation of an existing animation,
+NOT a redesign.
+
+PROJECT: Necromancer: First Dawn — hooded necromancer, shovel-wielding.
+
+CURRENT STATE: the player's run cycle uses frames player_2, player_3,
+player_4 (in that playback order) as a 3-pose stride. The game now supports
+a 4th pose (player_8.png) to complete the cycle, but that frame doesn't
+exist yet — the run currently loops the same 3 poses.
+
+TARGET: ONE new frame, player_8.png, exactly 96x80 pixels, transparent PNG,
+same horizontal center (x=48) and foot baseline (y=74) as every other player
+frame.
+
+WHAT'S NEEDED: a 4th run pose that continues the stride established by
+frames 2/3/4 — playback order will be 2 -> 3 -> 4 -> 8 -> loop, so frame 8
+should be the natural next step after frame 4 (opposite leg forward from
+frame 2, completing a full left-right gait cycle), not a repeat of an
+existing pose.
+
+DELIVERY PATH: res://assets/sprites/player/player_8.png (96x80, new file —
+do not touch player_0 through player_7)

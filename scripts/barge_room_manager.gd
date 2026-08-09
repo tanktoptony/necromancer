@@ -50,6 +50,7 @@ var shown_pois: Dictionary = {}
 var note_cooldowns: Dictionary = {}
 var corpse_note_rooms: Dictionary = {}
 var collision_debug_visible: bool = false
+var death_note_shown: bool = false
 var f3_was_down: bool = false
 var r_was_down: bool = false
 var m_was_down: bool = false
@@ -134,15 +135,44 @@ func _process(delta: float) -> void:
 	_handle_global_inputs()
 	if not is_instance_valid(player) or transitioning or current_room == null:
 		return
+	if player.health <= 0:
+		if not death_note_shown:
+			death_note_shown = true
+			_queue_note("Death is temporary. The paperwork is not. Press R to restart at your checkpoint.", 999.0, true)
+		return
+	death_note_shown = false
 	_refresh_allies()
 	_update_pickups()
 	_update_raise_ritual(delta)
 	_update_anchor_guidance()
 	_update_interaction_prompt()
 	_update_last_safe_position(delta)
+	_check_world_bounds()
 	_update_poi_camera()
 	_update_map()
 	_update_hud()
+
+func _check_world_bounds() -> void:
+	# Rooms only stop lateral travel via door trigger areas, not real walls, so any
+	# edge without a door (or any height above/below a door's narrow trigger band)
+	# is otherwise open air. This is the generic catch the old world-scene build had
+	# (WORLD_RECOVERY_Y) that never carried over into the per-room refactor.
+	var margin: float = 140.0
+	var out_of_bounds: bool = (
+		player.global_position.x < -margin
+		or player.global_position.x > current_room.room_size.x + margin
+		or player.global_position.y > current_room.room_size.y + margin
+		or player.global_position.y < -margin
+	)
+	if not out_of_bounds:
+		return
+	player.take_damage(1, player.global_position.x)
+	player.global_position = last_safe_position
+	player.velocity = Vector2.ZERO
+	for ally: RaisedGuard in allies:
+		if is_instance_valid(ally):
+			ally.snap_near_player()
+	_queue_note("The barge does not extend that far. Something drags you back aboard.", 6.0, false, "bounds_recovery", 10.0)
 
 func _handle_global_inputs() -> void:
 	var r_down: bool = Input.is_key_pressed(KEY_R)
@@ -295,6 +325,11 @@ func _spawn_room_encounters() -> void:
 		_spawn_breakable_from_marker(spawn)
 
 func _spawn_enemy_from_marker(spawn: Node) -> void:
+	var spawn_key: String = spawn.name
+	var clear_status: String = GameState.enemy_clear_status(current_room_id, spawn_key)
+	if clear_status == "raised":
+		# Already living as an ally elsewhere; this spawn point stays empty for good.
+		return
 	var enemy: RaggedEnemy = EnemyScript.new() as RaggedEnemy
 	enemy.position = spawn.position
 	enemy.target = player
@@ -305,6 +340,7 @@ func _spawn_enemy_from_marker(spawn: Node) -> void:
 	enemy.patrol_right = spawn.patrol_right
 	enemy.is_elite = spawn.elite
 	enemy.attack_phase_offset = spawn.phase
+	enemy.spawn_key = spawn_key
 	var slot_offsets: Array[float] = [-64.0, -28.0, 28.0, 64.0]
 	enemy.combat_slot_offset = slot_offsets[enemies.size() % slot_offsets.size()]
 	enemy.died.connect(_on_enemy_died)
@@ -313,6 +349,8 @@ func _spawn_enemy_from_marker(spawn: Node) -> void:
 	enemy.damaged.connect(_on_enemy_damaged)
 	enemy.support_pulsed.connect(_on_support_pulsed)
 	current_room.add_child(enemy)
+	if clear_status == "killed":
+		enemy.mark_pre_dead()
 	enemies.append(enemy)
 
 func _spawn_breakable_from_marker(spawn: Node) -> void:
@@ -549,6 +587,7 @@ func _complete_raise_ritual() -> void:
 		var corpse: RaggedEnemy = completed_target as RaggedEnemy
 		var corpse_position: Vector2 = corpse.global_position
 		var raised_role: int = _role_for_corpse(corpse)
+		GameState.mark_enemy_raised(current_room_id, corpse.spawn_key)
 		corpse.mark_raised()
 		_spawn_raised_ally(corpse_position, true, allies.size(), raised_role, int(corpse.archetype))
 		_play_sfx("raise")
@@ -725,16 +764,27 @@ func _update_poi_camera() -> void:
 	if current_room.poi_id == "rib_gate":
 		_queue_note("A sealed Rib Gate blocks the upper route. The broken hatch beneath it is less selective.", 9.5, true, "rib_gate_poi", 999.0)
 
-func _on_hazard_entered(hazard: Node) -> void:
-	if transitioning or not is_instance_valid(player):
+func _on_hazard_entered(hazard: Node, body: Node) -> void:
+	if transitioning:
 		return
-	player.take_damage(hazard.damage, player.global_position.x)
-	player.global_position = last_safe_position
-	player.velocity = Vector2.ZERO
-	for ally: RaisedGuard in allies:
+	if body is NecromancerPlayer:
+		if not is_instance_valid(player):
+			return
+		player.take_damage(hazard.damage, player.global_position.x)
+		player.global_position = last_safe_position
+		player.velocity = Vector2.ZERO
+		for ally: RaisedGuard in allies:
+			if is_instance_valid(ally):
+				ally.snap_near_player()
+		_queue_note("Cold water, immediate regret, one flesh lighter.", 6.2, false, "water_recovery", 14.0)
+	elif body is RaisedGuard:
+		var ally: RaisedGuard = body as RaisedGuard
+		if not is_instance_valid(ally):
+			return
+		ally.take_damage(hazard.damage, ally.global_position.x)
 		if is_instance_valid(ally):
-			ally.snap_near_player()
-	_queue_note("Cold water, immediate regret, one flesh lighter.", 6.2, false, "water_recovery", 14.0)
+			ally.global_position = last_safe_position
+			ally.velocity = Vector2.ZERO
 
 func _update_last_safe_position(delta: float) -> void:
 	safe_record_timer = maxf(0.0, safe_record_timer - delta)
@@ -786,22 +836,24 @@ func _combat_line_clear(origin: Vector2, target_position: Vector2) -> bool:
 	query.exclude = [player.get_rid()]
 	return get_world_2d().direct_space_state.intersect_ray(query).is_empty()
 
-func _on_projectile_requested(origin: Vector2, direction: Vector2, speed: float, damage: int) -> void:
+func _on_projectile_requested(origin: Vector2, direction: Vector2, speed: float, damage: int, visual_kind: String = "bolt") -> void:
 	var projectile: BoneProjectile = ProjectileScript.new() as BoneProjectile
 	projectile.position = origin
 	projectile.velocity = direction.normalized() * speed
 	projectile.damage = damage
 	projectile.owner_x = origin.x
 	projectile.hostile = true
+	projectile.visual_kind = visual_kind
 	current_room.add_child(projectile)
 
-func _on_ally_projectile_requested(origin: Vector2, direction: Vector2, speed: float, damage: int) -> void:
+func _on_ally_projectile_requested(origin: Vector2, direction: Vector2, speed: float, damage: int, visual_kind: String = "bolt") -> void:
 	var projectile: BoneProjectile = ProjectileScript.new() as BoneProjectile
 	projectile.position = origin
 	projectile.velocity = direction.normalized() * speed
 	projectile.damage = damage
 	projectile.owner_x = origin.x
 	projectile.hostile = false
+	projectile.visual_kind = visual_kind
 	current_room.add_child(projectile)
 
 func _on_enemy_alerted(source: RaggedEnemy) -> void:
@@ -814,6 +866,7 @@ func _on_enemy_died(_enemy: RaggedEnemy) -> void:
 	if is_instance_valid(_enemy):
 		var ash_amount: int = 2 if _enemy.archetype in [RaggedEnemy.Archetype.BRUTE, RaggedEnemy.Archetype.BELL_WRETCH, RaggedEnemy.Archetype.COFFIN_MIMIC] else 1
 		_spawn_pickup(_enemy.global_position + Vector2(0.0, -14.0), "ash", ash_amount)
+		GameState.mark_enemy_killed(current_room_id, _enemy.spawn_key)
 	if not bool(corpse_note_rooms.get(current_room_id, false)):
 		corpse_note_rooms[current_room_id] = true
 		_queue_note("Corpse available. Previous qualifications include trying to kill you.", 8.0, false, "corpse_%s" % current_room_id, 999.0)

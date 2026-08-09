@@ -1,0 +1,58 @@
+REFERENCE IMAGE
+`res://ART_HANDOFF/references/lantern_tosser_concept_sheet.png`
+
+PROJECT: Necromancer: First Dawn
+TARGET: production runtime pixel art, NOT concept art.
+
+HARD RUNTIME CONTRACT
+- Deliver exactly 10 separate transparent PNG files.
+- Each file MUST be exactly 96x80 pixels.
+- Filenames MUST be: enemy_0.png through enemy_9.png.
+- Hard-edged authored pixel art. No painterly brushwork, no soft airbrush shading, no semi-realistic render, no anti-aliased silhouette edges, no CSS/procedural-looking geometry.
+- Keep a coherent small runtime palette and clusters of deliberate pixels. It should sit beside the existing player sprite without looking downsampled from a painting.
+- Preserve the chunky gothic-Halloween storybook identity and readable silhouettes.
+- Orange = mundane lantern/fire light. Violet = necromancy/occult energy.
+- Left/right is handled by Godot sprite flip; draw one facing direction consistently.
+- Keep the character fully inside each 96x80 frame with several pixels of safety around the silhouette.
+- Maintain consistent visual scale and anchor placement across all 8 frames. Grounded humanoids should share a stable foot baseline near the bottom of the frame. Flying enemies should share a stable body center instead.
+- No labels, borders, grids, UI, backgrounds, drop shadows, or captions in final exported frames.
+
+FRAME ORDER REQUIRED BY GAME
+0 = dead
+1 = hurt / rise-react frame
+2 = idle A
+3 = idle B
+4 = movement A (walk/fly contact pose 1)
+5 = movement B (walk/fly passing pose 1)
+6 = attack windup
+7 = attack release
+8 = movement C (contact pose 2, opposite side from frame 4)
+9 = movement D (passing pose 2, opposite side from frame 5)
+
+IMPORTANT: frames 4, 5, 8, 9 together form ONE continuous 4-pose movement
+cycle, played back in the order 4 -> 5 -> 8 -> 9 -> loop. Frames 6/7 (attack)
+sit between them only in file-index order, not in playback order. Draw frames
+8/9 as the natural continuation of the stride/wingbeat started in 4/5 (mirror
+leg/wing), not as anything related to the attack pose.
+
+The reference image establishes design, silhouette, props, palette, and personality only. Redraw it as crisp production pixel art; do not simply resize/downsample the reference.
+
+ARCHETYPE-SPECIFIC DIRECTION
+Lantern Tosser — priority enemy. Hooded/crooked ranged nuisance carrying warm orange lanterns. Make the silhouette playful, sinister, and instantly identifiable. Orange glow must stay mundane; do NOT violet-tint the lantern flame. Cloth should be chunky and readable, not smoky painterly folds.
+
+Frame specifics:
+0 dead: collapsed robe/body with lantern extinguished or tipped nearby.
+1 hurt/rise-react: recoils, lantern swings, body compressed by hit.
+2 idle A: lantern held low, hunched watchful pose.
+3 idle B: lantern lifted/checking the room; clearly different silhouette.
+4 movement A: short shuffling step with lantern lag.
+5 movement B: opposite step with cloak/lantern counter-swing.
+8 movement C: continuation of the shuffle, opposite leg from frame 4, lanterns swinging further.
+9 movement D: completes the stride from frame 5, cloak settling before the cycle repeats.
+6 attack windup: winds arm back with lantern unmistakably prepared to throw.
+7 attack release: fully extended toss pose; lantern has just left the hand or is at the edge of the frame.
+
+IMPORTANT INTEGRATION NOTE: current enemy.gd adds a separate Lantern prop overlay for this archetype. Once final sprites include the lantern as requested here, the programmer should remove/disable that accessory overlay to avoid a doubled lantern.
+
+DELIVERY PATH
+`res://assets/sprites/enemy_types/lantern_tosser/enemy_0.png` through `enemy_9.png`

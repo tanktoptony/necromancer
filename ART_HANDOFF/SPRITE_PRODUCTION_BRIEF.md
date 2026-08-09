@@ -27,20 +27,23 @@ Current runtime compatibility uses individual PNG frames on a **96 × 80 px tran
 
 The default standing character baseline is approximately y=74 and horizontal center x=48. Keep feet/collision visually stable across frames unless the animation intentionally leaves the ground.
 
-Current 8-frame contract:
+Current 10-frame contract (expanded post-0.11.3: the original 2-frame walk cycle
+read as a "shuffle" in playtesting, so movement now gets 4 poses instead of 2):
 
 | File | Current semantic use | Art direction |
 |---|---|---|
 | enemy_0.png | dead/corpse | unmistakably the same creature, readable as raisable corpse |
-| enemy_1.png | reserved | use as hurt/rise anticipation; retained for future code expansion |
+| enemy_1.png | hurt/rise anticipation | now actively used as the enemy's hit-react flinch frame, in addition to the raised-guard rise pose |
 | enemy_2.png | idle A | clear silhouette |
 | enemy_3.png | idle B | characterful secondary idle |
-| enemy_4.png | walk A | strong leg/coat/prop separation |
-| enemy_5.png | walk B | opposite stride |
+| enemy_4.png | walk A (contact 1) | strong leg/coat/prop separation |
+| enemy_5.png | walk B (passing 1) | opposite stride |
 | enemy_6.png | attack windup | telegraph behavior clearly |
 | enemy_7.png | attack release | committed attack pose |
+| enemy_8.png | walk C (contact 2) | mirrors frame 4, opposite side planted |
+| enemy_9.png | walk D (passing 2) | completes the cycle; playback order is 4 -> 5 -> 8 -> 9 -> loop, not file order |
 
-Do not combine the frames into a sheet unless you ALSO return the eight individually named PNGs exactly as above.
+Do not combine the frames into a sheet unless you ALSO return the ten individually named PNGs exactly as above.
 
 ### Raised versions
 The current code reuses the enemy's source frames and applies a necromantic tint. Therefore the base silhouette must remain attractive/readable when tinted mint-green. Do not bake green into the hostile source sprites.

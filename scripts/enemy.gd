@@ -2,7 +2,7 @@ class_name RaggedEnemy
 extends CharacterBody2D
 
 signal died(enemy)
-signal projectile_requested(origin: Vector2, direction: Vector2, speed: float, damage: int)
+signal projectile_requested(origin: Vector2, direction: Vector2, speed: float, damage: int, visual_kind: String)
 signal alerted(enemy)
 signal damaged(position: Vector2, amount: int, heavy: bool)
 signal support_pulsed(position: Vector2)
@@ -11,11 +11,11 @@ enum Archetype { WALKER, CHARGER, SENTRY, HOPPER, BRUTE, BELL_WRETCH, SHIELD_GUA
 enum State { PATROL, ALERT, POSITION, WINDUP, ATTACK, RECOVER, BACKSTEP, HURT, DEAD }
 
 const GRAVITY: float = 820.0
-const LANTERN_PROP: Texture2D = preload("res://assets/vania/prop_lantern.png")
 
 var target: NecromancerPlayer
 var archetype: Archetype = Archetype.WALKER
 var room_id: String = ""
+var spawn_key: String = ""
 var room_bounds: Rect2 = Rect2(0.0, 0.0, 384.0, 216.0)
 var patrol_left: float = 0.0
 var patrol_right: float = 0.0
@@ -34,7 +34,6 @@ var action_triggered: bool = false
 var attack_direction: Vector2 = Vector2.LEFT
 var body_collision: CollisionShape2D
 var sprite: AnimatedSprite2D
-var accessory_sprite: Sprite2D
 var base_modulate: Color = Color.WHITE
 var walk_speed: float = 42.0
 var awareness_range: float = 210.0
@@ -44,10 +43,15 @@ var touch_damage_cooldown: float = 0.0
 var attack_cooldown: float = 0.0
 var alert_timer: float = 0.0
 var alert_sent: bool = false
+var announce_cooldown: float = 0.0
 var platform_jump_cooldown: float = 0.0
 var preferred_distance: float = 78.0
 var attack_phase_offset: float = 0.0
 var combat_slot_offset: float = 0.0
+var locked_flank_side: float = 1.0
+var sprite_base_position: Vector2 = Vector2.ZERO
+var sprite_base_scale: Vector2 = Vector2.ONE
+var walk_cycle_phase: float = 0.0
 var lost_sight_timer: float = 0.0
 var decision_delay: float = 0.0
 var backstep_direction: float = 0.0
@@ -70,13 +74,15 @@ func _ready() -> void:
 	floor_stop_on_slope = true
 	safe_margin = 0.04
 	home_position = global_position
+	if combat_slot_offset != 0.0:
+		locked_flank_side = signf(combat_slot_offset)
 	if patrol_left == 0.0 and patrol_right == 0.0:
 		patrol_left = home_position.x - 70.0
 		patrol_right = home_position.x + 70.0
 	_configure_archetype()
 	health = max_health
 	attack_cooldown = attack_phase_offset + 0.35
-	decision_delay = 0.15 + attack_phase_offset * 0.35
+	decision_delay = 0.1 + attack_phase_offset * 0.25
 	body_collision = CollisionShape2D.new()
 	var shape: CapsuleShape2D = CapsuleShape2D.new()
 	shape.radius = 7.0
@@ -200,8 +206,9 @@ func _build_sprite() -> void:
 	sprite.position = Vector2(0.0, -34.0)
 	var animations: Dictionary = {
 		"dead": {"frames": [0], "fps": 1.0, "loop": false},
+		"hurt": {"frames": [1], "fps": 1.0, "loop": false},
 		"idle": {"frames": [2, 3], "fps": 2.5, "loop": true},
-		"walk": {"frames": [4, 5], "fps": 6.5, "loop": true},
+		"walk": {"frames": [4, 5, 8, 9], "fps": 13.0, "loop": true},
 		"attack": {"frames": [6, 7], "fps": 7.0, "loop": false}
 	}
 	sprite.sprite_frames = FrameLibrary.build_frames(_sprite_variant_folder(), "enemy", animations)
@@ -233,14 +240,9 @@ func _build_sprite() -> void:
 	if is_elite:
 		sprite.scale *= 1.18
 	sprite.modulate = base_modulate
+	sprite_base_position = sprite.position
+	sprite_base_scale = sprite.scale
 	add_child(sprite)
-	if archetype == Archetype.LANTERN_TOSSER:
-		accessory_sprite = Sprite2D.new()
-		accessory_sprite.texture = LANTERN_PROP
-		accessory_sprite.scale = Vector2(0.095, 0.095)
-		accessory_sprite.position = Vector2(facing * 10.0, -25.0)
-		accessory_sprite.z_index = 2
-		add_child(accessory_sprite)
 	sprite.play("idle")
 
 func _sprite_variant_folder() -> String:
@@ -269,6 +271,7 @@ func _physics_process(delta: float) -> void:
 	touch_damage_cooldown = maxf(0.0, touch_damage_cooldown - delta)
 	attack_cooldown = maxf(0.0, attack_cooldown - delta)
 	alert_timer = maxf(0.0, alert_timer - delta)
+	announce_cooldown = maxf(0.0, announce_cooldown - delta)
 	platform_jump_cooldown = maxf(0.0, platform_jump_cooldown - delta)
 	decision_delay = maxf(0.0, decision_delay - delta)
 	target_scan_timer = maxf(0.0, target_scan_timer - delta)
@@ -277,7 +280,7 @@ func _physics_process(delta: float) -> void:
 		attack_cooldown = maxf(0.0, attack_cooldown - delta * 0.28)
 	if target_scan_timer <= 0.0:
 		_select_combat_target()
-		target_scan_timer = 0.22
+		target_scan_timer = 0.15
 	if state == State.DEAD:
 		var corpse_fall_limit: float = room_bounds.position.y + 202.0 if room_id == "breach" else room_bounds.end.y + 18.0
 		if global_position.y > corpse_fall_limit:
@@ -450,12 +453,13 @@ func receive_alert(duration: float = 3.0) -> void:
 		return
 	alert_timer = maxf(alert_timer, duration)
 	if state == State.PATROL:
-		_set_state(State.ALERT, 0.2 + attack_phase_offset * 0.15)
+		_set_state(State.ALERT, 0.12 + attack_phase_offset * 0.1)
 
 func _announce_alert() -> void:
-	if alert_sent:
+	if alert_sent or announce_cooldown > 0.0:
 		return
 	alert_sent = true
+	announce_cooldown = 2.6
 	alerted.emit(self)
 
 func _process_patrol(delta: float) -> void:
@@ -463,7 +467,7 @@ func _process_patrol(delta: float) -> void:
 	if _can_notice_target():
 		_announce_alert()
 		facing = signf(_target_difference().x) if absf(_target_difference().x) > 1.0 else facing
-		_set_state(State.ALERT, 0.2 + attack_phase_offset * 0.2)
+		_set_state(State.ALERT, 0.12 + attack_phase_offset * 0.14)
 		return
 
 	if archetype == Archetype.SENTRY or archetype == Archetype.COFFIN_MIMIC:
@@ -485,7 +489,7 @@ func _process_alert(delta: float) -> void:
 		return
 	facing = signf(_target_difference().x) if absf(_target_difference().x) > 1.0 else facing
 	if state_timer <= 0.0:
-		decision_delay = 0.12 + attack_phase_offset * 0.22
+		decision_delay = 0.07 + attack_phase_offset * 0.14
 		_set_state(State.POSITION, 0.0)
 
 func _process_position(delta: float) -> void:
@@ -534,8 +538,25 @@ func _process_position(delta: float) -> void:
 		Archetype.COFFIN_MIMIC:
 			_position_mimic(delta, difference)
 
+func _flank_offset() -> float:
+	# combat_slot_offset only carries a spawn-assigned magnitude; the side is
+	# picked dynamically from wherever the enemy currently stands relative to
+	# the target, so a group spreads around whoever it's actually engaging
+	# instead of drifting toward a slot fixed at spawn time.
+	# Recomputing the raw sign every frame flip-flops constantly for melee
+	# archetypes closing to near-zero distance from the target, reversing
+	# direction every time noise crosses zero. A deadzone locks the side in
+	# once committed and only reconsiders it once clearly on the other side.
+	var actor: CharacterBody2D = _current_target()
+	if not is_instance_valid(actor):
+		return absf(combat_slot_offset) * locked_flank_side
+	var dx: float = global_position.x - actor.global_position.x
+	if absf(dx) > 12.0:
+		locked_flank_side = signf(dx)
+	return absf(combat_slot_offset) * locked_flank_side
+
 func _position_walker(delta: float, difference: Vector2) -> void:
-	var desired_x: float = _target_position().x + combat_slot_offset
+	var desired_x: float = _target_position().x + _flank_offset()
 	var slot_difference: float = desired_x - global_position.x
 	if absf(difference.x) <= attack_range and absf(difference.y) <= 42.0 and attack_cooldown <= 0.0 and decision_delay <= 0.0 and _has_line_of_sight():
 		_try_begin_attack()
@@ -550,7 +571,7 @@ func _position_charger(delta: float, difference: Vector2) -> void:
 	if attack_cooldown <= 0.0 and decision_delay <= 0.0 and distance_x >= 88.0 and distance_x <= attack_range and absf(difference.y) <= 42.0 and _has_clear_charge_lane(facing):
 		_try_begin_attack()
 		return
-	var desired_x: float = _target_position().x - facing * preferred_distance + combat_slot_offset * 0.35
+	var desired_x: float = _target_position().x - facing * preferred_distance + _flank_offset() * 0.35
 	_move_toward_slot(delta, desired_x - global_position.x, walk_speed)
 
 func _position_sentry(delta: float, difference: Vector2) -> void:
@@ -572,14 +593,14 @@ func _position_hopper(delta: float, difference: Vector2) -> void:
 	if attack_cooldown <= 0.0 and decision_delay <= 0.0 and distance_x >= 55.0 and distance_x <= attack_range and absf(difference.y) <= 92.0:
 		_try_begin_attack()
 		return
-	var desired_x: float = _target_position().x - facing * preferred_distance + combat_slot_offset * 0.5
+	var desired_x: float = _target_position().x - facing * preferred_distance + _flank_offset() * 0.5
 	_move_toward_slot(delta, desired_x - global_position.x, walk_speed)
 
 func _position_brute(delta: float, difference: Vector2) -> void:
 	if absf(difference.x) <= attack_range and absf(difference.y) <= 46.0 and attack_cooldown <= 0.0 and decision_delay <= 0.0:
 		_try_begin_attack()
 		return
-	var desired_x: float = _target_position().x + combat_slot_offset * 0.35
+	var desired_x: float = _target_position().x + _flank_offset() * 0.35
 	_move_toward_slot(delta, desired_x - global_position.x, walk_speed)
 
 func _position_bell(delta: float, difference: Vector2) -> void:
@@ -598,7 +619,7 @@ func _position_crawler(delta: float, difference: Vector2) -> void:
 	if absf(difference.x) <= attack_range and absf(difference.y) <= 34.0 and attack_cooldown <= 0.0 and decision_delay <= 0.0:
 		_try_begin_attack()
 		return
-	var desired_x: float = _target_position().x + combat_slot_offset * 0.4
+	var desired_x: float = _target_position().x + _flank_offset() * 0.4
 	_move_toward_slot(delta, desired_x - global_position.x, walk_speed)
 
 func _position_hanged(delta: float, difference: Vector2) -> void:
@@ -606,7 +627,7 @@ func _position_hanged(delta: float, difference: Vector2) -> void:
 	if attack_cooldown <= 0.0 and decision_delay <= 0.0 and distance_x >= 52.0 and distance_x <= attack_range and absf(difference.y) <= 112.0:
 		_try_begin_attack()
 		return
-	var desired_x: float = _target_position().x - facing * preferred_distance + combat_slot_offset * 0.4
+	var desired_x: float = _target_position().x - facing * preferred_distance + _flank_offset() * 0.4
 	_move_toward_slot(delta, desired_x - global_position.x, walk_speed)
 
 func _position_mimic(delta: float, difference: Vector2) -> void:
@@ -663,7 +684,7 @@ func _begin_backstep(direction: float) -> void:
 func _process_backstep(delta: float) -> void:
 	velocity.x = move_toward(velocity.x, backstep_direction * 78.0, 340.0 * delta)
 	if state_timer <= 0.0 or (is_on_floor() and velocity.y >= 0.0):
-		decision_delay = 0.22
+		decision_delay = 0.14
 		_set_state(State.POSITION, 0.0)
 
 func _attack_slot_available() -> bool:
@@ -671,23 +692,30 @@ func _attack_slot_available() -> bool:
 		return true
 	var my_target: CharacterBody2D = _current_target()
 	var active_attackers: int = 0
+	var engaged_total: int = 0
 	for node: Node in get_tree().get_nodes_in_group("enemies"):
 		if node is RaggedEnemy:
 			var other: RaggedEnemy = node as RaggedEnemy
 			if other == self or other.room_id != room_id or not other.is_hostile_active():
 				continue
+			if other._current_target() != my_target:
+				continue
+			engaged_total += 1
 			if other.state == State.WINDUP or other.state == State.ATTACK:
 				if other.archetype == Archetype.SENTRY or other.archetype == Archetype.BELL_WRETCH:
 					continue
-				if other._current_target() == my_target:
-					active_attackers += 1
-	return active_attackers < 1
+				active_attackers += 1
+	# A lone or paired enemy still takes turns fairly; once a real mob (3+) is
+	# engaged, letting two attack at once makes the group feel like a threat
+	# instead of a queue.
+	var slot_limit: int = 2 if engaged_total >= 3 else 1
+	return active_attackers < slot_limit
 
 func _try_begin_attack() -> void:
 	if attack_cooldown > 0.0 or not _target_is_available():
 		return
 	if not _attack_slot_available():
-		decision_delay = 0.22 + attack_phase_offset * 0.12
+		decision_delay = 0.14 + attack_phase_offset * 0.08
 		return
 	var difference: Vector2 = _target_difference()
 	facing = signf(difference.x) if absf(difference.x) > 1.0 else facing
@@ -699,7 +727,7 @@ func _try_begin_attack() -> void:
 			_set_state(State.WINDUP, 0.38)
 		Archetype.CHARGER:
 			if absf(difference.y) > 42.0 or not _has_clear_charge_lane(facing):
-				decision_delay = 0.25
+				decision_delay = 0.18
 				return
 			_set_state(State.WINDUP, 0.74 if not is_elite else 0.56)
 		Archetype.SENTRY:
@@ -708,7 +736,7 @@ func _try_begin_attack() -> void:
 		Archetype.HOPPER:
 			attack_direction.x = signf((_target_position().x + _target_velocity().x * 0.4) - global_position.x)
 			if not _has_hopper_landing(attack_direction.x):
-				decision_delay = 0.35
+				decision_delay = 0.24
 				return
 			_set_state(State.WINDUP, 0.58)
 		Archetype.BRUTE:
@@ -725,7 +753,7 @@ func _try_begin_attack() -> void:
 		Archetype.HANGED_SAILOR:
 			attack_direction.x = signf((_target_position().x + _target_velocity().x * 0.25) - global_position.x)
 			if not _has_hopper_landing(attack_direction.x):
-				decision_delay = 0.28
+				decision_delay = 0.2
 				return
 			_set_state(State.WINDUP, 0.66)
 		Archetype.COFFIN_MIMIC:
@@ -788,7 +816,7 @@ func _process_attack(delta: float) -> void:
 			velocity.x = 0.0
 			if not action_triggered:
 				action_triggered = true
-				projectile_requested.emit(global_position + Vector2(facing * 12.0, -25.0), attack_direction, 168.0 if not is_elite else 198.0, attack_damage)
+				projectile_requested.emit(global_position + Vector2(facing * 12.0, -25.0), attack_direction, 168.0 if not is_elite else 198.0, attack_damage, "bolt")
 			if state_timer <= 0.0:
 				attack_cooldown = 1.15 + attack_phase_offset * 0.3
 				_set_state(State.RECOVER, 1.28 if not is_elite else 0.94)
@@ -830,7 +858,7 @@ func _process_attack(delta: float) -> void:
 			velocity.x = 0.0
 			if not action_triggered:
 				action_triggered = true
-				projectile_requested.emit(global_position + Vector2(facing * 10.0, -27.0), attack_direction, 142.0, attack_damage)
+				projectile_requested.emit(global_position + Vector2(facing * 10.0, -27.0), attack_direction, 142.0, attack_damage, "lantern")
 			if state_timer <= 0.0:
 				attack_cooldown = 1.35 + attack_phase_offset * 0.25
 				_set_state(State.RECOVER, 1.05)
@@ -866,7 +894,7 @@ func _process_recover(delta: float) -> void:
 	velocity.x = move_toward(velocity.x, 0.0, 780.0 * delta)
 	if state_timer <= 0.0:
 		locked_attack_target = null
-		decision_delay = 0.16 + attack_phase_offset * 0.2
+		decision_delay = 0.1 + attack_phase_offset * 0.12
 		if _can_notice_target():
 			_set_state(State.POSITION, 0.0)
 		else:
@@ -876,7 +904,7 @@ func _process_hurt(delta: float) -> void:
 	velocity.x = move_toward(velocity.x, 0.0, 520.0 * delta)
 	if state_timer <= 0.0:
 		attack_cooldown = maxf(attack_cooldown, 0.3)
-		decision_delay = 0.18
+		decision_delay = 0.12
 		_set_state(State.POSITION if _can_notice_target() else State.PATROL, 0.0)
 
 func _try_melee_hit(horizontal_range: float, vertical_range: float) -> void:
@@ -1065,16 +1093,32 @@ func _update_animation() -> void:
 	if sprite == null:
 		return
 	sprite.flip_h = facing < 0.0
-	if accessory_sprite != null:
-		accessory_sprite.position.x = facing * 11.0
 	if state == State.DEAD:
 		sprite.play("dead")
+	elif state == State.HURT:
+		sprite.play("hurt")
 	elif state == State.WINDUP or state == State.ATTACK:
 		sprite.play("attack")
 	elif absf(velocity.x) > 5.0:
 		sprite.play("walk")
 	else:
 		sprite.play("idle")
+
+	# Procedural bob/squash on top of the sprite-sheet walk frames: a real
+	# gait cycle needs more poses than the 2-frame walk currently has art
+	# for, so this sells stride weight independent of frame count. Keys off
+	# actual velocity (not just "is walking") so it scales with pace and
+	# vanishes instantly on stop, and layers harmlessly on top of any future
+	# expanded frame set.
+	if state != State.DEAD and absf(velocity.x) > 5.0:
+		walk_cycle_phase = fmod(walk_cycle_phase + absf(velocity.x) * get_physics_process_delta_time() * 0.25, TAU)
+		var bob: float = sin(walk_cycle_phase) * 3.2
+		var squash: float = sin(walk_cycle_phase) * 0.07
+		sprite.position = sprite_base_position + Vector2(0.0, bob)
+		sprite.scale = sprite_base_scale * Vector2(1.0 - squash, 1.0 + squash)
+	else:
+		sprite.position = sprite_base_position
+		sprite.scale = sprite_base_scale
 
 	var color: Color = base_modulate
 	if state == State.ALERT:
@@ -1135,3 +1179,14 @@ func mark_raised() -> void:
 	raised = true
 	remove_from_group("enemies")
 	queue_free()
+
+func mark_pre_dead() -> void:
+	# Used when a room reloads with this spawn already recorded as killed:
+	# spawn the corpse directly, skipping the fall/settle sequence, so it's
+	# immediately raise-able instead of coming back alive.
+	health = 0
+	active = false
+	state = State.DEAD
+	state_timer = 0.0
+	corpse_settled = true
+	velocity = Vector2.ZERO

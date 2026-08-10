@@ -1,7 +1,7 @@
 class_name BargeRoomScene
 extends Node2D
 
-const PLATFORM_LIP_TEXTURE: Texture2D = preload("res://assets/vania11/platform_trim.png")
+const PLATFORM_MODULE_TEXTURE: Texture2D = preload("res://assets/vania11/platform_module.png")
 const DECK_TRIM_TEXTURE: Texture2D = preload("res://assets/vania11/deck_trim.png")
 
 @export var room_id: String = ""
@@ -42,15 +42,22 @@ func _decorate_one_way_platforms() -> void:
 		var body := collision.get_parent() as Node2D
 		if body == null:
 			continue
-		var lip := Sprite2D.new()
-		lip.texture = PLATFORM_LIP_TEXTURE if collision.one_way_collision else DECK_TRIM_TEXTURE
-		lip.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
-		lip.region_enabled = true
-		var trim_height: float = 18.0 if collision.one_way_collision else 20.0
-		lip.region_rect = Rect2(0.0, 0.0, rect_shape.size.x, trim_height)
-		lip.position = body.position + collision.position + Vector2(0.0, -rect_shape.size.y * 0.5 - trim_height * 0.34)
-		lip.modulate = Color(1.0, 0.97, 0.91, 0.98)
-		decor_root.add_child(lip)
+		var platform_art := Sprite2D.new()
+		platform_art.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+		platform_art.region_enabled = true
+		var collision_top: float = -rect_shape.size.y * 0.5
+		if collision.one_way_collision:
+			platform_art.texture = PLATFORM_MODULE_TEXTURE
+			platform_art.region_rect = Rect2(0.0, 0.0, rect_shape.size.x, 80.0)
+			# The module's first 50 rows are transparent so the detailed plank face
+			# begins exactly at the walkable collision edge and hangs below it.
+			platform_art.position = body.position + collision.position + Vector2(0.0, collision_top - 10.0)
+		else:
+			platform_art.texture = DECK_TRIM_TEXTURE
+			platform_art.region_rect = Rect2(0.0, 0.0, rect_shape.size.x, 20.0)
+			platform_art.position = body.position + collision.position + Vector2(0.0, collision_top + 10.0)
+		platform_art.modulate = Color(1.0, 1.0, 1.0, 1.0)
+		decor_root.add_child(platform_art)
 
 func get_spawn(spawn_id: String) -> Marker2D:
 	var node: Node = get_node_or_null("SpawnPoints/%s" % spawn_id)

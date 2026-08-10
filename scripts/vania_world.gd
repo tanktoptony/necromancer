@@ -5,6 +5,12 @@ const EnemyScript: Script = preload("res://scripts/enemy.gd")
 const GuardScript: Script = preload("res://scripts/guard.gd")
 const ProjectileScript: Script = preload("res://scripts/projectile.gd")
 const MapScript: Script = preload("res://scripts/map_overlay.gd")
+const VFX_SLASH_1: Texture2D = preload("res://assets/vfx/slash_1.png")
+const VFX_SLASH_2: Texture2D = preload("res://assets/vfx/slash_2.png")
+const VFX_SLASH_3: Texture2D = preload("res://assets/vfx/slash_3.png")
+const VFX_IMPACT_LIGHT: Texture2D = preload("res://assets/vfx/impact_light.png")
+const VFX_IMPACT_HEAVY: Texture2D = preload("res://assets/vfx/impact_heavy.png")
+const VFX_SUPPORT_PULSE: Texture2D = preload("res://assets/vfx/support_pulse.png")
 
 const WORLD_SIZE: Vector2 = Vector2(4992.0, 972.0)
 const VIEWPORT_SIZE: Vector2 = Vector2(640.0, 360.0)
@@ -771,13 +777,14 @@ func _open_bone_gate() -> void:
 	_play_sfx("heavy_hit", 0.82)
 	_queue_note("The bone gate revises its position on collective bargaining.", 6.0)
 
-func _on_projectile_requested(origin: Vector2, direction: Vector2, speed: float, damage: int) -> void:
+func _on_projectile_requested(origin: Vector2, direction: Vector2, speed: float, damage: int, visual_kind: String = "bolt") -> void:
 	var projectile: BoneProjectile = ProjectileScript.new() as BoneProjectile
 	projectile.position = origin
-	projectile.velocity = direction.normalized() * speed
+	projectile.velocity = _projectile_launch_velocity(direction, speed, visual_kind)
 	projectile.damage = damage
 	projectile.owner_x = origin.x
 	projectile.hostile = true
+	projectile.visual_kind = visual_kind
 	add_child(projectile)
 
 func _on_enemy_alerted(source: RaggedEnemy) -> void:
@@ -1254,14 +1261,22 @@ func _role_for_corpse(corpse: RaggedEnemy) -> int:
 		_:
 			return RaisedGuard.Role.GUARD
 
-func _on_ally_projectile_requested(origin: Vector2, direction: Vector2, speed: float, damage: int) -> void:
+func _on_ally_projectile_requested(origin: Vector2, direction: Vector2, speed: float, damage: int, visual_kind: String = "bolt") -> void:
 	var projectile: BoneProjectile = ProjectileScript.new() as BoneProjectile
 	projectile.position = origin
-	projectile.velocity = direction.normalized() * speed
+	projectile.velocity = _projectile_launch_velocity(direction, speed, visual_kind)
 	projectile.damage = damage
 	projectile.owner_x = origin.x
 	projectile.hostile = false
+	projectile.visual_kind = visual_kind
 	add_child(projectile)
+
+func _projectile_launch_velocity(direction: Vector2, speed: float, visual_kind: String) -> Vector2:
+	var aim := direction.normalized()
+	if visual_kind != "lantern":
+		return aim * speed
+	var horizontal_sign := signf(aim.x) if absf(aim.x) > 0.05 else 1.0
+	return Vector2(horizontal_sign * maxf(absf(aim.x) * speed, speed * 0.82), clampf(aim.y * speed - 200.0, -250.0, -140.0))
 
 func _on_enemy_damaged(position_value: Vector2, amount: int, heavy: bool) -> void:
 	_spawn_impact_effect(position_value, heavy)
@@ -1329,55 +1344,24 @@ func _update_combat_feedback(delta: float) -> void:
 			game_camera.offset = Vector2.ZERO
 
 func _spawn_slash_effect(origin: Vector2, facing_value: float, combo_step: int) -> void:
-	var effect: Node2D = Node2D.new()
-	effect.position = origin + Vector2(facing_value * 25.0, -25.0)
-	effect.scale.x = facing_value
-	effect.z_index = 15
-	var arc: Line2D = Line2D.new()
-	arc.width = 3.0 if combo_step < 3 else 5.0
-	arc.default_color = Color(0.72, 0.92, 0.82, 0.95) if combo_step < 3 else Color(0.82, 0.48, 1.0, 1.0)
-	arc.points = PackedVector2Array([Vector2(-5.0, -16.0), Vector2(8.0, -20.0), Vector2(22.0, -12.0), Vector2(30.0, 2.0), Vector2(24.0, 15.0)])
-	effect.add_child(arc)
-	add_child(effect)
-	var tween: Tween = create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(effect, "modulate:a", 0.0, 0.16)
-	tween.tween_property(effect, "scale", effect.scale * 1.22, 0.16)
-	tween.chain().tween_callback(Callable(effect, "queue_free"))
+	var textures: Array[Texture2D] = [VFX_SLASH_1, VFX_SLASH_2, VFX_SLASH_3]
+	var effect := _spawn_world_vfx(textures[clampi(combo_step - 1, 0, 2)], origin + Vector2(facing_value * 26.0, -24.0), Vector2(1.15, 1.15), 0.16)
+	effect.flip_h = facing_value < 0.0
 
 func _spawn_impact_effect(position_value: Vector2, heavy: bool) -> void:
-	var effect: Node2D = Node2D.new()
-	effect.position = position_value + Vector2(0.0, -24.0)
-	effect.z_index = 16
-	var ray_count: int = 8 if heavy else 5
-	for index: int in range(ray_count):
-		var ray: Line2D = Line2D.new()
-		var angle: float = TAU * float(index) / float(ray_count)
-		var length: float = 15.0 if heavy else 9.0
-		ray.width = 2.0
-		ray.default_color = Color(0.9, 0.38, 0.28, 1.0) if heavy else Color(0.86, 0.78, 0.62, 1.0)
-		ray.points = PackedVector2Array([Vector2.from_angle(angle) * 3.0, Vector2.from_angle(angle) * length])
-		effect.add_child(ray)
-	add_child(effect)
-	var tween: Tween = create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(effect, "modulate:a", 0.0, 0.22)
-	tween.tween_property(effect, "scale", Vector2.ONE * (1.5 if heavy else 1.25), 0.22)
-	tween.chain().tween_callback(Callable(effect, "queue_free"))
+	_spawn_world_vfx(VFX_IMPACT_HEAVY if heavy else VFX_IMPACT_LIGHT, position_value + Vector2(0.0, -24.0), Vector2(1.4, 1.4), 0.2)
 
 func _spawn_support_pulse(position_value: Vector2) -> void:
-	var ring: Line2D = Line2D.new()
-	ring.position = position_value + Vector2(0.0, -24.0)
-	ring.width = 3.0
-	ring.default_color = Color(1.0, 0.76, 0.26, 0.9)
-	var points: PackedVector2Array = PackedVector2Array()
-	for index: int in range(25):
-		points.append(Vector2.from_angle(TAU * float(index) / 24.0) * 12.0)
-	ring.points = points
-	ring.z_index = 14
-	add_child(ring)
-	var tween: Tween = create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(ring, "scale", Vector2.ONE * 8.0, 0.55)
-	tween.tween_property(ring, "modulate:a", 0.0, 0.55)
-	tween.chain().tween_callback(Callable(ring, "queue_free"))
+	_spawn_world_vfx(VFX_SUPPORT_PULSE, position_value + Vector2(0.0, -24.0), Vector2(1.8, 1.8), 0.4)
+
+func _spawn_world_vfx(texture: Texture2D, position_value: Vector2, end_scale: Vector2, duration: float) -> Sprite2D:
+	var effect := Sprite2D.new()
+	effect.texture = texture
+	effect.position = position_value
+	effect.z_index = 16
+	add_child(effect)
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(effect, "scale", end_scale, duration)
+	tween.tween_property(effect, "modulate:a", 0.0, duration)
+	tween.chain().tween_callback(effect.queue_free)
+	return effect

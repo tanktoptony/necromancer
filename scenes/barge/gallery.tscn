@@ -8,7 +8,7 @@
 [ext_resource type="Script" path="res://scripts/rooms/bone_gate.gd" id="6_gate"]
 [ext_resource type="Script" path="res://scripts/rooms/breakable_spawn.gd" id="7_break"]
 [ext_resource type="Texture2D" path="res://assets/vania07/quarantine_gallery.png" id="10_bg"]
-[ext_resource type="Texture2D" path="res://assets/vania11/stairs.png" id="11_stairs"]
+[ext_resource type="Texture2D" path="res://assets/vania12/stairs_large.png" id="11_stairs"]
 [ext_resource type="Texture2D" path="res://assets/vania11/railing.png" id="12_rail"]
 
 [sub_resource type="RectangleShape2D" id="floor"]
@@ -113,12 +113,13 @@ one_way_collision_margin = 7.0
 [node name="GameplayStairs" type="Sprite2D" parent="Gameplay"]
 texture = ExtResource("11_stairs")
 position = Vector2(260, 575)
-scale = Vector2(1.45, 1.45)
 z_index = 1
 [node name="UpperRail" type="Sprite2D" parent="Gameplay"]
 texture = ExtResource("12_rail")
 position = Vector2(900, 293)
-scale = Vector2(2.2,1.0)
+texture_repeat = 2
+region_enabled = true
+region_rect = Rect2(0, 0, 210, 40)
 z_index = 2
 [node name="Doors" type="Node2D" parent="Gameplay"]
 

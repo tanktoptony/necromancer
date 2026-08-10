@@ -73,8 +73,10 @@ one_way_collision_margin = 7.0
 
 [node name="UpperRail" type="Sprite2D" parent="Gameplay"]
 texture=ExtResource("12_rail")
-position=Vector2(470,180)
-scale=Vector2(2.1,1)
+position=Vector2(470,160)
+texture_repeat=2
+region_enabled=true
+region_rect=Rect2(0,0,220,40)
 z_index=2
 [node name="Doors" type="Node2D" parent="Gameplay"]
 

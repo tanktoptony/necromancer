@@ -35,7 +35,7 @@ room_title = "X. THE UPPER ORLOP"
 room_size = Vector2(1152.0, 360.0)
 camera_offset = Vector2(0.0, -18.0)
 camera_zoom = Vector2(1.0, 1.0)
-intro_note = "The Upper Orlop curls back behind the Rib Gate. Now the shortcut makes sense."
+intro_note = "Below the Ossuary Deck, the barge remembers an older crew. The air gets colder here."
 poi_id = ""
 poi_trigger_x = -1.0
 poi_focus_offset = Vector2(0.0, 0.0)
@@ -86,7 +86,7 @@ one_way_collision_margin = 7.0
 position = Vector2(12.0, 300.0)
 script = ExtResource("2_door")
 door_id = "left"
-target_room = "gate"
+target_room = "deck"
 target_door = "right"
 direction = "left"
 
@@ -145,7 +145,7 @@ position = Vector2(1040.0, 300.0)
 [node name="Enemy0" type="Marker2D" parent="EnemySpawns"]
 position = Vector2(380.0, 300.0)
 script = ExtResource("4_enemy")
-archetype = 0
+archetype = 6
 patrol_left = 250.0
 patrol_right = 520.0
 elite = false

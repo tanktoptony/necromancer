@@ -7,6 +7,16 @@ const ProjectileScript: Script = preload("res://scripts/projectile.gd")
 const MapScript: Script = preload("res://scripts/map_overlay.gd")
 const BreakableScript: Script = preload("res://scripts/rooms/breakable_prop.gd")
 const PickupScript: Script = preload("res://scripts/pickup_drop.gd")
+const VFX_SLASH_1: Texture2D = preload("res://assets/vfx/slash_1.png")
+const VFX_SLASH_2: Texture2D = preload("res://assets/vfx/slash_2.png")
+const VFX_SLASH_3: Texture2D = preload("res://assets/vfx/slash_3.png")
+const VFX_IMPACT_LIGHT: Texture2D = preload("res://assets/vfx/impact_light.png")
+const VFX_IMPACT_HEAVY: Texture2D = preload("res://assets/vfx/impact_heavy.png")
+const VFX_RAISE_BURST: Texture2D = preload("res://assets/vfx/raise_burst.png")
+const VFX_SUPPORT_PULSE: Texture2D = preload("res://assets/vfx/support_pulse.png")
+const VFX_HOOK_BEAM: Texture2D = preload("res://assets/vfx/hook_beam.png")
+const VFX_HOOK_FIELD: Texture2D = preload("res://assets/vfx/hook_field.png")
+const VFX_RITUAL_RING: Texture2D = preload("res://assets/vfx/ritual_ring.png")
 
 const VIEWPORT_SIZE: Vector2 = Vector2(640.0, 360.0)
 const ROOM_SCENES: Dictionary = {
@@ -15,7 +25,12 @@ const ROOM_SCENES: Dictionary = {
 	"gate": "res://scenes/barge/gate.tscn",
 	"breach": "res://scenes/barge/breach.tscn",
 	"chain": "res://scenes/barge/chain.tscn",
-	"deck": "res://scenes/barge/deck.tscn"
+	"deck": "res://scenes/barge/deck.tscn",
+	"orlop": "res://scenes/barge/orlop.tscn",
+	"shaft": "res://scenes/barge/shaft.tscn",
+	"rigging": "res://scenes/barge/rigging.tscn",
+	"galley": "res://scenes/barge/galley.tscn",
+	"captain": "res://scenes/barge/captain.tscn"
 }
 
 var room_holder: Node2D
@@ -401,10 +416,12 @@ func _on_door_entered(door: Node) -> void:
 		return
 	if current_room_id == "gate" and door.door_id == "right" and not GameState.bone_gate_open:
 		_queue_note("The Rib Gate remains between you and the deck. Q has opinions about this now.", 6.8, true, "gate_exit_locked", 8.0)
+		door.reset_block()
 		return
 	if door.target_room == "END":
 		if _active_enemy_count() > 0:
 			_queue_note("The gangplank remains professionally occupied.", 5.0, false, "exit_blocked", 7.0)
+			door.reset_block()
 			return
 		GameState.slice_complete = true
 		_queue_note("FIRST DAWN ROOM-SCENE PASS COMPLETE — shore leave remains aspirational.", 8.0, true, "slice_complete", 999.0)
@@ -839,7 +856,7 @@ func _combat_line_clear(origin: Vector2, target_position: Vector2) -> bool:
 func _on_projectile_requested(origin: Vector2, direction: Vector2, speed: float, damage: int, visual_kind: String = "bolt") -> void:
 	var projectile: BoneProjectile = ProjectileScript.new() as BoneProjectile
 	projectile.position = origin
-	projectile.velocity = direction.normalized() * speed
+	projectile.velocity = _projectile_launch_velocity(direction, speed, visual_kind)
 	projectile.damage = damage
 	projectile.owner_x = origin.x
 	projectile.hostile = true
@@ -849,12 +866,23 @@ func _on_projectile_requested(origin: Vector2, direction: Vector2, speed: float,
 func _on_ally_projectile_requested(origin: Vector2, direction: Vector2, speed: float, damage: int, visual_kind: String = "bolt") -> void:
 	var projectile: BoneProjectile = ProjectileScript.new() as BoneProjectile
 	projectile.position = origin
-	projectile.velocity = direction.normalized() * speed
+	projectile.velocity = _projectile_launch_velocity(direction, speed, visual_kind)
 	projectile.damage = damage
 	projectile.owner_x = origin.x
 	projectile.hostile = false
 	projectile.visual_kind = visual_kind
 	current_room.add_child(projectile)
+
+func _projectile_launch_velocity(direction: Vector2, speed: float, visual_kind: String) -> Vector2:
+	var aim := direction.normalized()
+	if visual_kind != "lantern":
+		return aim * speed
+	# Preserve horizontal aim while adding the lift needed for a readable
+	# gravity-driven lob. Downward targets still receive a minimum upward toss.
+	var horizontal_sign := signf(aim.x) if absf(aim.x) > 0.05 else 1.0
+	var horizontal_speed := maxf(absf(aim.x) * speed, speed * 0.82)
+	var upward_speed := clampf(aim.y * speed - 200.0, -250.0, -140.0)
+	return Vector2(horizontal_sign * horizontal_speed, upward_speed)
 
 func _on_enemy_alerted(source: RaggedEnemy) -> void:
 	_play_sfx("alert", 0.95)
@@ -1399,70 +1427,44 @@ func _update_combat_feedback(delta: float) -> void:
 			game_camera.offset = Vector2.ZERO
 
 func _spawn_raise_burst(position_value: Vector2) -> void:
-	var ring := Line2D.new()
-	var points := PackedVector2Array()
-	for index: int in range(33):
-		var angle: float = TAU * float(index) / 32.0
-		points.append(position_value + Vector2(cos(angle), sin(angle)) * 18.0)
-	ring.points = points
-	ring.width = 2.6
-	ring.default_color = Color(0.68, 0.25, 0.88, 0.92)
-	effects_holder.add_child(ring)
-	var tween: Tween = create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(ring, "scale", Vector2(2.6, 2.6), 0.34)
-	tween.tween_property(ring, "modulate:a", 0.0, 0.34)
-	tween.chain().tween_callback(ring.queue_free)
+	_spawn_vfx_sprite(VFX_RAISE_BURST, position_value + Vector2(0.0, -20.0), Vector2(1.45, 1.45), 0.34)
 
 func _spawn_slash_effect(origin: Vector2, facing_value: float, combo_step: int) -> void:
-	var slash: Line2D = Line2D.new()
-	slash.width = 2.2 + float(combo_step) * 0.8
-	slash.default_color = Color(0.76, 0.52, 0.92, 0.82)
-	var reach: float = 28.0 + float(combo_step) * 5.0
-	slash.points = PackedVector2Array([origin + Vector2(facing_value * 8.0, -30.0), origin + Vector2(facing_value * reach, -22.0), origin + Vector2(facing_value * (reach + 7.0), -10.0)])
-	effects_holder.add_child(slash)
-	var tween: Tween = create_tween()
-	tween.tween_property(slash, "modulate:a", 0.0, 0.16)
-	tween.tween_callback(slash.queue_free)
+	var textures: Array[Texture2D] = [VFX_SLASH_1, VFX_SLASH_2, VFX_SLASH_3]
+	var slash: Sprite2D = _spawn_vfx_sprite(textures[clampi(combo_step - 1, 0, 2)], origin + Vector2(facing_value * 26.0, -24.0), Vector2(1.12, 1.12), 0.16)
+	slash.flip_h = facing_value < 0.0
 
 func _spawn_impact_effect(position_value: Vector2, heavy: bool) -> void:
-	var impact: Polygon2D = Polygon2D.new()
-	impact.position = position_value + Vector2(0.0, -24.0)
-	var radius: float = 11.0 if heavy else 7.0
-	impact.polygon = PackedVector2Array([Vector2(0,-radius),Vector2(radius,0),Vector2(0,radius),Vector2(-radius,0)])
-	impact.color = Color(0.9, 0.68, 0.35, 0.9) if heavy else Color(0.82, 0.45, 0.72, 0.84)
-	effects_holder.add_child(impact)
-	var tween: Tween = create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(impact, "scale", Vector2(1.8,1.8), 0.14)
-	tween.tween_property(impact, "modulate:a", 0.0, 0.14)
-	tween.chain().tween_callback(impact.queue_free)
+	_spawn_vfx_sprite(VFX_IMPACT_HEAVY if heavy else VFX_IMPACT_LIGHT, position_value + Vector2(0.0, -24.0), Vector2(1.35, 1.35), 0.18)
 
 func _spawn_support_pulse(position_value: Vector2) -> void:
-	var ring: Line2D = Line2D.new()
-	var points: PackedVector2Array = PackedVector2Array()
-	for index: int in range(25):
-		var angle: float = TAU * float(index) / 24.0
-		points.append(position_value + Vector2(cos(angle), sin(angle)) * 26.0)
-	ring.points = points
-	ring.width = 2.0
-	ring.default_color = Color(0.95, 0.74, 0.3, 0.75)
-	effects_holder.add_child(ring)
-	var tween: Tween = create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(ring, "scale", Vector2(1.8,1.8), 0.28)
-	tween.tween_property(ring, "modulate:a", 0.0, 0.28)
-	tween.chain().tween_callback(ring.queue_free)
+	_spawn_vfx_sprite(VFX_SUPPORT_PULSE, position_value + Vector2(0.0, -24.0), Vector2(1.65, 1.65), 0.32)
+
+func _spawn_vfx_sprite(texture: Texture2D, position_value: Vector2, end_scale: Vector2, duration: float) -> Sprite2D:
+	var effect := Sprite2D.new()
+	effect.texture = texture
+	effect.position = position_value
+	effect.z_index = 16
+	effects_holder.add_child(effect)
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(effect, "scale", end_scale, duration)
+	tween.tween_property(effect, "modulate:a", 0.0, duration)
+	tween.chain().tween_callback(effect.queue_free)
+	return effect
 
 func _draw() -> void:
 	if is_instance_valid(player) and hook_field_active:
-		draw_arc(player.global_position + Vector2(0.0, -20.0), HOOK_FIELD_RADIUS, 0.0, TAU, 72, Color(0.55, 0.22, 0.72, 0.22), 2.0)
+		var hook_center := player.global_position + Vector2(0.0, -20.0)
+		draw_texture_rect(VFX_HOOK_FIELD, Rect2(hook_center - Vector2(64.0, 64.0), Vector2(128.0, 128.0)), false, Color(1.0, 1.0, 1.0, 0.55))
 		var aim_end: Vector2 = player.global_position + Vector2(0.0, -20.0) + player.hook_aim_direction * 78.0
-		draw_line(player.global_position + Vector2(0.0, -20.0), aim_end, Color(0.74, 0.4, 0.9, 0.7), 2.0)
+		var aim_vector := aim_end - hook_center
+		draw_set_transform(hook_center, aim_vector.angle(), Vector2(aim_vector.length() / 64.0, 1.0))
+		draw_texture(VFX_HOOK_BEAM, Vector2(0.0, -8.0))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	if raise_active and is_instance_valid(raise_target):
 		var ratio: float = clampf(raise_progress / maxf(raise_required, 0.01), 0.0, 1.0)
 		var center: Vector2 = raise_target.global_position + Vector2(0.0, -18.0)
-		draw_circle(center, 23.0, Color(0.24, 0.05, 0.34, 0.28))
+		draw_texture_rect(VFX_RITUAL_RING, Rect2(center - Vector2(48.0, 48.0), Vector2(96.0, 96.0)), false, Color(1.0, 1.0, 1.0, 0.72))
 		draw_arc(center, 25.0, -PI * 0.5, -PI * 0.5 + TAU * ratio, 36, Color(0.78, 0.35, 0.94, 0.96), 3.0)
 	if not collision_debug_visible or current_room == null:
 		return

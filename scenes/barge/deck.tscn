@@ -87,8 +87,8 @@ shape = SubResource("door")
 position = Vector2(1140, 300)
 script = ExtResource("2_door")
 door_id = "right"
-target_room = "END"
-target_door = "default"
+target_room = "orlop"
+target_door = "left"
 direction = "right"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Doors/Door_right"]
@@ -101,6 +101,9 @@ position = Vector2(70, 300)
 
 [node name="default" type="Marker2D" parent="SpawnPoints"]
 position = Vector2(70, 300)
+
+[node name="right" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(1080, 300)
 
 [node name="SafePoints" type="Node2D" parent="."]
 
@@ -209,6 +212,8 @@ max_range=220.0
 z_index=12
 [node name="DeckRail" type="Sprite2D" parent="Foreground"]
 texture=ExtResource("11_rail")
-position=Vector2(576,292)
-scale=Vector2(11.0,1.0)
-modulate=Color(0.55,0.55,0.58,0.38)
+position=Vector2(576,280)
+texture_repeat=2
+region_enabled=true
+region_rect=Rect2(0,0,1152,40)
+modulate=Color(1,1,1,0.82)

@@ -84,8 +84,8 @@ shape = SubResource("Rect_4")
 position = Vector2(948.0, 332.0)
 script = ExtResource("2_door")
 door_id = "right"
-target_room = "deck"
-target_door = "left"
+target_room = "END"
+target_door = "default"
 direction = "right"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Doors/Door_right"]

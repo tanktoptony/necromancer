@@ -4,6 +4,7 @@ extends Area2D
 signal entered(door)
 
 const DOOR_TEXTURE: Texture2D = preload("res://assets/vania10/bulkhead_door.png")
+const DOOR_FRAME_TEXTURE: Texture2D = preload("res://assets/vania12/bulkhead_door_frame.png")
 
 @export var door_id: String = "door"
 @export var target_room: String = ""
@@ -18,6 +19,7 @@ var _cooldown: float = 0.0
 var open_amount: float = 0.0
 var _transition_pending: bool = false
 var door_sprite: Sprite2D
+var door_frame_sprite: Sprite2D
 var closed_sprite_position: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
@@ -29,17 +31,26 @@ func _ready() -> void:
 	queue_redraw()
 
 func _build_visual() -> void:
+	door_frame_sprite = Sprite2D.new()
+	door_frame_sprite.texture = DOOR_FRAME_TEXTURE
+	door_frame_sprite.z_index = 4
 	door_sprite = Sprite2D.new()
 	door_sprite.texture = DOOR_TEXTURE
 	door_sprite.z_index = 5
 	if direction == "down" or direction == "up":
+		door_frame_sprite.rotation = PI * 0.5
+		door_frame_sprite.scale = Vector2(1.15, 1.15)
+		door_frame_sprite.position = Vector2(0.0, -3.0)
 		door_sprite.rotation = PI * 0.5
 		door_sprite.scale = Vector2(1.15, 1.15)
 		closed_sprite_position = Vector2(0.0, -3.0)
 	else:
+		door_frame_sprite.scale = Vector2(0.9, 0.9)
+		door_frame_sprite.position = Vector2(0.0, -36.0)
 		door_sprite.scale = Vector2(0.9, 0.9)
 		closed_sprite_position = Vector2(0.0, -31.0)
 	door_sprite.position = closed_sprite_position
+	add_child(door_frame_sprite)
 	add_child(door_sprite)
 	_update_visual()
 
@@ -49,6 +60,20 @@ func _process(delta: float) -> void:
 func arm_delay(seconds: float = 0.35) -> void:
 	_cooldown = seconds
 	enabled = true
+
+func reset_block() -> void:
+	# _on_body_entered latches enabled=false/_transition_pending=true and starts
+	# the open animation before the manager decides whether the transition is
+	# actually allowed. Without this, a blocked entry (locked gate, enemies
+	# still alive) permanently dead-switches the door even after the block
+	# condition clears, since nothing else ever re-arms it.
+	_transition_pending = false
+	enabled = true
+	_cooldown = 0.3
+	var tween: Tween = create_tween()
+	tween.set_trans(Tween.TRANS_QUAD)
+	tween.set_ease(Tween.EASE_IN)
+	tween.tween_method(_set_open_amount, open_amount, 0.0, 0.16)
 
 func show_arrival_open(seconds: float = 0.42) -> void:
 	open_amount = 1.0
@@ -90,8 +115,5 @@ func _update_visual() -> void:
 	door_sprite.modulate = Color(1.0, 1.0, 1.0, 1.0 - open_amount * 0.15)
 
 func _draw() -> void:
-	# The opening is deliberately simple and dark; the illustrated bulkhead is the dominant visual.
-	if direction == "down" or direction == "up":
-		draw_rect(Rect2(Vector2(-34.0, -8.0), Vector2(68.0, 16.0)), Color(0.012, 0.008, 0.016, 0.88), true)
-	else:
-		draw_rect(Rect2(Vector2(-13.0, -55.0), Vector2(26.0, 55.0)), Color(0.012, 0.008, 0.016, 0.88), true)
+	# The doorway depth is authored into the fixed frame sprite.
+	pass

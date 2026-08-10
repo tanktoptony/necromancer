@@ -10,6 +10,10 @@ const PLAYER_MARKER: Texture2D = preload("res://assets/vania10/map_player.png")
 const HOOK_MARKER: Texture2D = preload("res://assets/vania10/map_hook.png")
 const GATE_MARKER: Texture2D = preload("res://assets/vania10/map_gate.png")
 const HEART_MARKER: Texture2D = preload("res://assets/vania10/map_heart.png")
+const CONNECTOR_HORIZONTAL: Texture2D = preload("res://assets/vania10/map_connector_horizontal.png")
+const CONNECTOR_VERTICAL: Texture2D = preload("res://assets/vania10/map_connector_vertical.png")
+const CONNECTOR_CORNER: Texture2D = preload("res://assets/vania10/map_connector_corner.png")
+const CONNECTOR_SEALED: Texture2D = preload("res://assets/vania10/map_connector_sealed.png")
 
 var current_room: String = "receiving"
 var local_position: Vector2 = Vector2.ZERO
@@ -24,7 +28,12 @@ var room_names: Dictionary = {
 	"gate": "Rib Gate",
 	"breach": "Hull Breach",
 	"chain": "Chain Crypt",
-	"deck": "Ossuary Deck"
+	"deck": "Ossuary Deck",
+	"orlop": "Upper Orlop",
+	"shaft": "Winch Shaft",
+	"rigging": "Rigging Walk",
+	"galley": "Mourning Galley",
+	"captain": "Captain's Ossuary"
 }
 
 var room_sizes: Dictionary = {
@@ -33,7 +42,12 @@ var room_sizes: Dictionary = {
 	"gate": Vector2(768,360),
 	"breach": Vector2(960,360),
 	"chain": Vector2(576,360),
-	"deck": Vector2(1152,360)
+	"deck": Vector2(1152,360),
+	"orlop": Vector2(1152,360),
+	"shaft": Vector2(384,648),
+	"rigging": Vector2(960,360),
+	"galley": Vector2(768,360),
+	"captain": Vector2(960,360)
 }
 
 func _ready() -> void:
@@ -73,25 +87,56 @@ func _draw_cell(cell: Vector2i, is_current: bool) -> void:
 	draw_texture_rect(texture, Rect2(position, Vector2(CELL_SIZE, CELL_SIZE)), false)
 
 func _draw_connections() -> void:
-	var route_ink := Color(0.32, 0.23, 0.14, 0.92)
-	_connect_if("receiving", "gallery", Vector2i(3,4), Vector2i(4,4), route_ink)
-	_connect_if("gallery", "gate", Vector2i(9,4), Vector2i(10,4), route_ink)
-	_connect_if("gate", "breach", Vector2i(11,5), Vector2i(11,6), route_ink)
-	_connect_if("breach", "chain", Vector2i(15,7), Vector2i(16,7), route_ink)
-	_connect_if("gate", "deck", Vector2i(13,4), Vector2i(14,4), Color(0.48,0.31,0.12,0.96) if gate_open else Color(0.32,0.14,0.12,0.9))
+	_connect_if("receiving", "gallery", Vector2i(3,4), Vector2i(4,4))
+	_connect_if("gallery", "gate", Vector2i(9,4), Vector2i(10,4))
+	_connect_if("gate", "breach", Vector2i(11,5), Vector2i(11,6))
+	_connect_if("breach", "chain", Vector2i(15,7), Vector2i(16,7))
+	_connect_if("gate", "deck", Vector2i(13,4), Vector2i(14,4), not gate_open)
 	# The crypt lift is the return leg that makes the first area a circuit instead of a hallway.
-	_connect_if("chain", "gate", Vector2i(18,6), Vector2i(12,5), Color(0.40,0.26,0.35,0.9))
+	_connect_if("chain", "gate", Vector2i(18,6), Vector2i(12,5))
+	# orlop/shaft/rigging/galley/captain are drawn without map cells: the 600x330
+	# parchment canvas is already nearly the full 640-wide game viewport, with no
+	# room left to extend the grid for 5 more compartments without a wider map
+	# redesign. room_names/room_sizes above keep the HUD label and player-dot
+	# math correct in those rooms; _player_map_point falls back to MAP_ORIGIN
+	# when a room has no rect, so this degrades gracefully instead of breaking.
 
-func _connect_if(first: String, second: String, from_cell: Vector2i, to_cell: Vector2i, color: Color) -> void:
+func _connect_if(first: String, second: String, from_cell: Vector2i, to_cell: Vector2i, sealed: bool = false) -> void:
 	if not bool(discovered.get(first, false)) or not bool(discovered.get(second, false)):
 		return
 	var from_point: Vector2 = _cell_center(from_cell)
 	var to_point: Vector2 = _cell_center(to_cell)
-	# chunky pixel-map connector rather than a thin UI line
 	var middle := Vector2(to_point.x, from_point.y)
-	draw_line(from_point, middle, color, 4.0)
-	draw_line(middle, to_point, color, 4.0)
-	draw_circle(middle, 3.0, color)
+	_draw_connector_leg(from_point, middle, CONNECTOR_HORIZONTAL)
+	_draw_connector_leg(middle, to_point, CONNECTOR_VERTICAL)
+	if from_point.x != to_point.x and from_point.y != to_point.y:
+		var horizontal_sign := signf(from_point.x - middle.x)
+		var vertical_sign := signf(to_point.y - middle.y)
+		var rotation := 0.0
+		if horizontal_sign < 0.0 and vertical_sign > 0.0:
+			rotation = PI * 0.5
+		elif horizontal_sign < 0.0 and vertical_sign < 0.0:
+			rotation = PI
+		elif horizontal_sign > 0.0 and vertical_sign < 0.0:
+			rotation = -PI * 0.5
+		_draw_connector_at(CONNECTOR_CORNER, middle, rotation)
+	if sealed:
+		_draw_connector_at(CONNECTOR_SEALED, (from_point + to_point) * 0.5)
+
+func _draw_connector_leg(start: Vector2, finish: Vector2, texture: Texture2D) -> void:
+	var distance := start.distance_to(finish)
+	if distance < 1.0:
+		return
+	var direction := start.direction_to(finish)
+	var steps := maxi(1, int(ceil(distance / CELL_SIZE)))
+	for index in range(steps + 1):
+		var point := start + direction * minf(distance, float(index) * CELL_SIZE)
+		_draw_connector_at(texture, point)
+
+func _draw_connector_at(texture: Texture2D, center: Vector2, rotation: float = 0.0) -> void:
+	draw_set_transform(center, rotation)
+	draw_texture(texture, Vector2(-9.0, -9.0))
+	draw_set_transform(Vector2.ZERO, 0.0)
 
 func _draw_markers() -> void:
 	draw_texture(PLAYER_MARKER, _player_map_point() - Vector2(5.0,5.0))

@@ -212,31 +212,43 @@ func _build_sprite() -> void:
 		"attack": {"frames": [6, 7], "fps": 7.0, "loop": false}
 	}
 	sprite.sprite_frames = FrameLibrary.build_frames(_sprite_variant_folder(), "enemy", animations)
+	# The source art in these folders was drawn filling far more of its 96x80
+	# canvas than the player/guard art does (measured ~85-95% vs ~58-60%),
+	# so archetypes sharing those folders render oversized relative to the
+	# player unless corrected here. Position is scaled by the same factor so
+	# feet stay grounded instead of floating once the sprite shrinks.
 	if archetype == Archetype.CHARGER:
-		sprite.scale = Vector2(1.12, 1.12)
+		sprite.scale = Vector2(0.73, 0.73)
+		sprite.position = Vector2(0.0, -22.2)
 	elif archetype == Archetype.HOPPER:
 		sprite.scale = Vector2(0.88, 0.88)
 	elif archetype == Archetype.SENTRY:
-		sprite.scale = Vector2(0.96, 0.96)
+		sprite.scale = Vector2(0.66, 0.66)
+		sprite.position = Vector2(0.0, -23.5)
 	elif archetype == Archetype.BRUTE:
-		sprite.scale = Vector2(1.24, 1.24)
+		sprite.scale = Vector2(0.81, 0.81)
+		sprite.position = Vector2(0.0, -22.2)
 	elif archetype == Archetype.BELL_WRETCH:
-		sprite.scale = Vector2(0.92, 0.92)
+		sprite.scale = Vector2(0.62, 0.62)
+		sprite.position = Vector2(0.0, -22.8)
 	elif archetype == Archetype.SHIELD_GUARD:
-		sprite.scale = Vector2(1.08, 1.08)
+		sprite.scale = Vector2(0.72, 0.72)
+		sprite.position = Vector2(0.0, -22.8)
 	elif archetype == Archetype.LANTERN_TOSSER:
-		sprite.scale = Vector2(0.94, 0.94)
+		sprite.scale = Vector2(0.65, 0.65)
+		sprite.position = Vector2(0.0, -23.5)
 	elif archetype == Archetype.BILGE_CRAWLER:
 		sprite.scale = Vector2(0.78, 0.68)
 		sprite.position = Vector2(0.0, -24.0)
 	elif archetype == Archetype.HANGED_SAILOR:
-		sprite.scale = Vector2(0.96, 1.08)
+		sprite.scale = Vector2(0.69, 0.77)
+		sprite.position = Vector2(0.0, -24.3)
 	elif archetype == Archetype.BONE_CROW:
 		sprite.scale = Vector2(0.9, 0.9)
 		sprite.position = Vector2(0.0, -14.0)
 	elif archetype == Archetype.COFFIN_MIMIC:
-		sprite.scale = Vector2(0.92, 0.92)
-		sprite.position = Vector2(0.0, -37.0)
+		sprite.scale = Vector2(0.62, 0.62)
+		sprite.position = Vector2(0.0, -25.0)
 	if is_elite:
 		sprite.scale *= 1.18
 	sprite.modulate = base_modulate

@@ -114,6 +114,11 @@ func _build_sprite() -> void:
 		Role.SENTRY:
 			sprite.scale = Vector2(0.94, 0.94)
 	if source_archetype >= 0:
+		# Same oversized-source-art correction as RaggedEnemy._build_sprite;
+		# without it a raised ally renders at full (too-large) enemy scale.
+		var correction: float = _source_scale_correction()
+		sprite.scale *= correction
+		sprite.position *= correction
 		# Raised enemies keep their old silhouette; necromancy is communicated by corpse-light, not replacement art.
 		sprite.modulate = Color(0.66, 1.0, 0.82, 1.0)
 	else:
@@ -122,6 +127,23 @@ func _build_sprite() -> void:
 	sprite_base_scale = sprite.scale
 	add_child(sprite)
 	sprite.play("idle" if resurrected else "dead")
+
+func _source_scale_correction() -> float:
+	match source_archetype:
+		RaggedEnemy.Archetype.SHIELD_GUARD:
+			return 0.67
+		RaggedEnemy.Archetype.LANTERN_TOSSER, RaggedEnemy.Archetype.SENTRY:
+			return 0.69
+		RaggedEnemy.Archetype.BRUTE, RaggedEnemy.Archetype.CHARGER:
+			return 0.65
+		RaggedEnemy.Archetype.BELL_WRETCH:
+			return 0.67
+		RaggedEnemy.Archetype.HANGED_SAILOR:
+			return 0.72
+		RaggedEnemy.Archetype.COFFIN_MIMIC:
+			return 0.68
+		_:
+			return 1.0
 
 func _source_sprite_folder() -> String:
 	match source_archetype:

@@ -46,6 +46,7 @@ var sprite: AnimatedSprite2D
 var sprite_base_position: Vector2 = Vector2.ZERO
 var sprite_base_scale: Vector2 = Vector2.ONE
 var walk_cycle_phase: float = 0.0
+var run_anim_grace: float = 0.0
 var hooking: bool = false
 var hook_target: Vector2 = Vector2.ZERO
 var hook_time: float = 0.0
@@ -76,7 +77,7 @@ func _build_sprite() -> void:
 	sprite.position = Vector2(0.0, -34.0)
 	var animations: Dictionary = {
 		"idle": {"frames": [0, 1], "fps": 2.5, "loop": true},
-		"run": {"frames": [2, 3, 4, 8], "fps": 12.0, "loop": true},
+		"run": {"frames": [2, 3, 4, 8], "fps": 8.0, "loop": true},
 		"jump": {"frames": [5], "fps": 1.0, "loop": false},
 		"attack": {"frames": [6, 7], "fps": 11.0, "loop": false}
 	}
@@ -94,6 +95,7 @@ func _physics_process(delta: float) -> void:
 	hurt_time = maxf(0.0, hurt_time - delta)
 	ledge_assist_cooldown = maxf(0.0, ledge_assist_cooldown - delta)
 	combo_timer = maxf(0.0, combo_timer - delta)
+	run_anim_grace = maxf(0.0, run_anim_grace - delta)
 	_update_attack(delta)
 
 	# Interaction release matters for charged resurrection even while control is locked.
@@ -384,23 +386,22 @@ func _update_animation() -> void:
 	elif not is_on_floor():
 		sprite.play("jump")
 	elif absf(velocity.x) > 12.0:
+		run_anim_grace = 0.15
+		sprite.play("run")
+	elif run_anim_grace > 0.0:
+		# Same fix as RaggedEnemy/RaisedGuard: releasing or reversing a move key
+		# decelerates smoothly through zero, which briefly reads as "stopped"
+		# and flashes the idle pose mid-stride without this grace.
 		sprite.play("run")
 	else:
 		sprite.play("idle")
 	if not ritual_channeling:
 		sprite.speed_scale = 1.0
 
-	# Lighter version of the enemy/ally bob: the player's run already has more
-	# real frames, this just adds a bit of extra stride weight on top.
-	if is_on_floor() and not hooking and not ritual_channeling and not hook_aiming and absf(velocity.x) > 12.0:
-		walk_cycle_phase = fmod(walk_cycle_phase + absf(velocity.x) * get_physics_process_delta_time() * 0.25, TAU)
-		var bob: float = sin(walk_cycle_phase) * 1.8
-		var squash: float = sin(walk_cycle_phase) * 0.045
-		sprite.position = sprite_base_position + Vector2(0.0, bob)
-		sprite.scale = sprite_base_scale * Vector2(1.0 - squash, 1.0 + squash)
-	else:
-		sprite.position = sprite_base_position
-		sprite.scale = sprite_base_scale
+	# Keep the authored player animation and its stable foot baseline intact.
+	# layer a second procedural movement cycle over the authored frames.
+	sprite.position = sprite_base_position
+	sprite.scale = sprite_base_scale
 
 	var flashing: bool = hurt_time > 0.0 and int(hurt_time * 24.0) % 2 == 0
 	sprite.modulate = Color(1.0, 0.55, 0.55, 1.0) if flashing else Color.WHITE

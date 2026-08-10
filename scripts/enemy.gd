@@ -52,6 +52,7 @@ var locked_flank_side: float = 1.0
 var sprite_base_position: Vector2 = Vector2.ZERO
 var sprite_base_scale: Vector2 = Vector2.ONE
 var walk_cycle_phase: float = 0.0
+var walk_anim_grace: float = 0.0
 var lost_sight_timer: float = 0.0
 var decision_delay: float = 0.0
 var backstep_direction: float = 0.0
@@ -185,7 +186,12 @@ func _configure_archetype() -> void:
 		Archetype.BONE_CROW:
 			walk_speed = 88.0
 			awareness_range = 290.0
-			attack_range = 205.0
+			# The dive attack commits to a fixed 215 px/s velocity for 0.5s (~107px
+			# max reach) once triggered; a wider range than that just means it
+			# repeatedly dives short of the target and recovers, reading as
+			# spastic bouncing instead of a committed swoop. Kept tight enough
+			# that a triggered dive can actually cover the remaining distance.
+			attack_range = 105.0
 			preferred_distance = 96.0
 			max_health = maxi(max_health, 2)
 			base_modulate = Color(0.78, 0.72, 0.92, 1.0)
@@ -208,7 +214,7 @@ func _build_sprite() -> void:
 		"dead": {"frames": [0], "fps": 1.0, "loop": false},
 		"hurt": {"frames": [1], "fps": 1.0, "loop": false},
 		"idle": {"frames": [2, 3], "fps": 2.5, "loop": true},
-		"walk": {"frames": [4, 5, 8, 9], "fps": 13.0, "loop": true},
+		"walk": {"frames": [4, 5, 8, 9], "fps": 7.0, "loop": true},
 		"attack": {"frames": [6, 7], "fps": 7.0, "loop": false}
 	}
 	sprite.sprite_frames = FrameLibrary.build_frames(_sprite_variant_folder(), "enemy", animations)
@@ -288,6 +294,7 @@ func _physics_process(delta: float) -> void:
 	decision_delay = maxf(0.0, decision_delay - delta)
 	target_scan_timer = maxf(0.0, target_scan_timer - delta)
 	bell_buff_timer = maxf(0.0, bell_buff_timer - delta)
+	walk_anim_grace = maxf(0.0, walk_anim_grace - delta)
 	if bell_buff_timer > 0.0:
 		attack_cooldown = maxf(0.0, attack_cooldown - delta * 0.28)
 	if target_scan_timer <= 0.0:
@@ -1112,25 +1119,22 @@ func _update_animation() -> void:
 	elif state == State.WINDUP or state == State.ATTACK:
 		sprite.play("attack")
 	elif absf(velocity.x) > 5.0:
+		walk_anim_grace = 0.15
+		sprite.play("walk")
+	elif walk_anim_grace > 0.0:
+		# Patrol/position movement decelerates smoothly through zero velocity on
+		# every direction reversal (e.g. hitting a patrol boundary), which briefly
+		# reads as "stopped" to a raw threshold check and flashes the idle pose
+		# mid-stride. A short grace period bridges that crossing without masking
+		# a real, sustained stop.
 		sprite.play("walk")
 	else:
 		sprite.play("idle")
 
-	# Procedural bob/squash on top of the sprite-sheet walk frames: a real
-	# gait cycle needs more poses than the 2-frame walk currently has art
-	# for, so this sells stride weight independent of frame count. Keys off
-	# actual velocity (not just "is walking") so it scales with pace and
-	# vanishes instantly on stop, and layers harmlessly on top of any future
-	# expanded frame set.
-	if state != State.DEAD and absf(velocity.x) > 5.0:
-		walk_cycle_phase = fmod(walk_cycle_phase + absf(velocity.x) * get_physics_process_delta_time() * 0.25, TAU)
-		var bob: float = sin(walk_cycle_phase) * 3.2
-		var squash: float = sin(walk_cycle_phase) * 0.07
-		sprite.position = sprite_base_position + Vector2(0.0, bob)
-		sprite.scale = sprite_base_scale * Vector2(1.0 - squash, 1.0 + squash)
-	else:
-		sprite.position = sprite_base_position
-		sprite.scale = sprite_base_scale
+	# The four authored poses carry the gait. Avoid procedural squash/bob,
+	# which made the silhouettes snap around independently of the footfalls.
+	sprite.position = sprite_base_position
+	sprite.scale = sprite_base_scale
 
 	var color: Color = base_modulate
 	if state == State.ALERT:

@@ -1,0 +1,28 @@
+REFERENCE: res://assets/sprites/player/player_3.png, player_4.png — two clean
+frames from the player's own current 4-frame run cycle. Match these exactly:
+same character, same palette, same pixel scale, same 96x80 canvas. This is a
+BUGFIX on an existing animation, NOT a redesign.
+
+PROJECT: Necromancer: First Dawn — hooded necromancer, shovel-wielding.
+
+BUG: player_2.png and player_8.png (2 of the 4 frames in the run cycle,
+playback order 2 -> 3 -> 4 -> 8 -> loop) both have a stray gray creature
+(reads as a dog or rat) baked into the frame at the character's feet. It does
+not appear in player_3.png or player_4.png. Since the run cycle loops through
+all four frames, this creature visibly flickers in and out of existence once
+per stride during normal movement. Confirmed by inspecting the raw PNG files
+directly — this is in the source art, not a rendering or code bug.
+
+WHAT'S NEEDED: redraw player_2.png and player_8.png to remove the creature
+entirely, keeping everything else about those poses unchanged (same stride
+position in the gait cycle, same character silhouette, same equipment). The
+result should look like a natural continuation of player_3.png / player_4.png
+with no extra creature, prop, or silhouette anywhere in the frame.
+
+TARGET: TWO replacement frames, exactly 96x80 pixels each, transparent PNG,
+same horizontal center (x=48) and foot baseline (y=74) as every other player
+frame in this set.
+
+DELIVERY PATH: res://assets/sprites/player/player_2.png and player_8.png
+(96x80 each, overwrite in place — do not touch player_0, player_1, player_3
+through player_7)

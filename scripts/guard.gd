@@ -32,6 +32,7 @@ var sprite: AnimatedSprite2D
 var sprite_base_position: Vector2 = Vector2.ZERO
 var sprite_base_scale: Vector2 = Vector2.ONE
 var walk_cycle_phase: float = 0.0
+var run_anim_grace: float = 0.0
 var stuck_time: float = 0.0
 var last_position: Vector2 = Vector2.ZERO
 var jump_cooldown: float = 0.0
@@ -96,7 +97,7 @@ func _build_sprite() -> void:
 			"dead": {"frames": [0], "fps": 1.0, "loop": false},
 			"rise": {"frames": [0, 1, 2], "fps": 6.0, "loop": false},
 			"idle": {"frames": [2, 3], "fps": 2.5, "loop": true},
-			"run": {"frames": [4, 5, 8, 9], "fps": 14.0, "loop": true},
+			"run": {"frames": [4, 5, 8, 9], "fps": 8.0, "loop": true},
 			"attack": {"frames": [6, 7], "fps": 7.0, "loop": false}
 		}
 	else:
@@ -104,7 +105,7 @@ func _build_sprite() -> void:
 			"dead": {"frames": [0], "fps": 1.0, "loop": false},
 			"rise": {"frames": [1, 2], "fps": 5.0, "loop": false},
 			"idle": {"frames": [3, 4], "fps": 2.5, "loop": true},
-			"run": {"frames": [5, 6, 8, 9], "fps": 15.0, "loop": true},
+			"run": {"frames": [5, 6, 8, 9], "fps": 8.0, "loop": true},
 			"attack": {"frames": [7], "fps": 1.0, "loop": false}
 		}
 	sprite.sprite_frames = FrameLibrary.build_frames(folder, "enemy" if source_archetype >= 0 else "guard", animations)
@@ -212,6 +213,7 @@ func _physics_process(delta: float) -> void:
 	hurt_time = maxf(0.0, hurt_time - delta)
 	jump_cooldown = maxf(0.0, jump_cooldown - delta)
 	target_memory_timer = maxf(0.0, target_memory_timer - delta)
+	run_anim_grace = maxf(0.0, run_anim_grace - delta)
 	if source_archetype == RaggedEnemy.Archetype.BONE_CROW:
 		_physics_process_crow_follower(delta)
 		return
@@ -596,6 +598,12 @@ func _update_animation(target_enemy: RaggedEnemy) -> void:
 	if attack_windup > 0.0 or attack_recovery > 0.0:
 		sprite.play("attack")
 	elif absf(velocity.x) > 8.0:
+		run_anim_grace = 0.15
+		sprite.play("run")
+	elif run_anim_grace > 0.0:
+		# Same fix as RaggedEnemy: following/combat repositioning decelerates
+		# smoothly through zero on every direction change, which briefly reads
+		# as "stopped" and flashes the idle pose mid-stride without this grace.
 		sprite.play("run")
 	else:
 		sprite.play("idle")
@@ -604,17 +612,10 @@ func _update_animation(target_enemy: RaggedEnemy) -> void:
 	else:
 		sprite.speed_scale = 1.0
 
-	# Same procedural bob/squash as enemies, layered on top of the sprite frames
-	# to sell stride weight that the current 2-frame walk art can't carry alone.
-	if absf(velocity.x) > 8.0:
-		walk_cycle_phase = fmod(walk_cycle_phase + absf(velocity.x) * get_physics_process_delta_time() * 0.25, TAU)
-		var bob: float = sin(walk_cycle_phase) * 3.2
-		var squash: float = sin(walk_cycle_phase) * 0.07
-		sprite.position = sprite_base_position + Vector2(0.0, bob)
-		sprite.scale = sprite_base_scale * Vector2(1.0 - squash, 1.0 + squash)
-	else:
-		sprite.position = sprite_base_position
-		sprite.scale = sprite_base_scale
+	# Keep the authored footfalls stable instead of adding an unrelated
+	# procedural bob/squash cycle on top of them.
+	sprite.position = sprite_base_position
+	sprite.scale = sprite_base_scale
 
 func can_be_raised() -> bool:
 	return not resurrected

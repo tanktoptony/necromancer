@@ -11,6 +11,20 @@ enum Archetype { WALKER, CHARGER, SENTRY, HOPPER, BRUTE, BELL_WRETCH, SHIELD_GUA
 enum State { PATROL, ALERT, POSITION, WINDUP, ATTACK, RECOVER, BACKSTEP, HURT, DEAD }
 
 const GRAVITY: float = 820.0
+# hanged_sailor's source art varies from 27% to 94% canvas-width fill between
+# frames (measured directly from the PNGs); values are target-width / actual
+# per-frame width fill, applied as an absolute scale.x override so every
+# frame renders at the same effective width regardless of how it was drawn.
+# Keyed by the ABSOLUTE enemy_N.png frame index, not AnimatedSprite2D's
+# sprite.frame (which is local to whichever animation is currently playing -
+# see HANGED_SAILOR_ANIM_FRAMES below for the local->absolute mapping).
+const HANGED_SAILOR_FRAME_SCALE_X: Dictionary = {
+	0: 0.400, 1: 0.554, 2: 1.384, 3: 0.899, 4: 0.765,
+	5: 0.899, 6: 0.400, 7: 0.545, 8: 0.856, 9: 0.783
+}
+const HANGED_SAILOR_ANIM_FRAMES: Dictionary = {
+	"dead": [0], "hurt": [1], "idle": [2, 3], "walk": [4, 5, 8, 9], "attack": [6, 7]
+}
 
 var target: NecromancerPlayer
 var archetype: Archetype = Archetype.WALKER
@@ -186,11 +200,9 @@ func _configure_archetype() -> void:
 		Archetype.BONE_CROW:
 			walk_speed = 88.0
 			awareness_range = 290.0
-			# The dive attack commits to a fixed 215 px/s velocity for 0.5s (~107px
-			# max reach) once triggered; a wider range than that just means it
-			# repeatedly dives short of the target and recovers, reading as
-			# spastic bouncing instead of a committed swoop. Kept tight enough
-			# that a triggered dive can actually cover the remaining distance.
+			# Begin the telegraph only after the crow has closed the gap. Launch
+			# then rechecks the target and scales the committed dive to the actual
+			# distance, preventing out-of-range short dives from looping.
 			attack_range = 105.0
 			preferred_distance = 96.0
 			max_health = maxi(max_health, 2)
@@ -244,11 +256,18 @@ func _build_sprite() -> void:
 		sprite.scale = Vector2(0.65, 0.65)
 		sprite.position = Vector2(0.0, -23.5)
 	elif archetype == Archetype.BILGE_CRAWLER:
-		sprite.scale = Vector2(0.78, 0.68)
-		sprite.position = Vector2(0.0, -24.0)
+		# Re-measured after the latest art pass: this archetype's frames now
+		# draw at ~72% canvas-height fill on average (vs the ~58% player/guard
+		# target), consistently oversized rather than frame-inconsistent.
+		sprite.scale = Vector2(0.63, 0.55)
+		sprite.position = Vector2(0.0, -19.3)
 	elif archetype == Archetype.HANGED_SAILOR:
-		sprite.scale = Vector2(0.69, 0.77)
-		sprite.position = Vector2(0.0, -24.3)
+		# Height is consistent across frames (~92.5% fill) so a uniform scale
+		# corrects it, but WIDTH varies wildly frame-to-frame (27%-94% fill) -
+		# a fixed scale can't fix that, hence the per-frame scale.x override in
+		# _update_animation() (see HANGED_SAILOR_FRAME_SCALE_X below).
+		sprite.scale = Vector2(0.627, 0.627)
+		sprite.position = Vector2(0.0, -21.3)
 	elif archetype == Archetype.BONE_CROW:
 		sprite.scale = Vector2(0.9, 0.9)
 		sprite.position = Vector2(0.0, -14.0)
@@ -301,7 +320,17 @@ func _physics_process(delta: float) -> void:
 		_select_combat_target()
 		target_scan_timer = 0.15
 	if state == State.DEAD:
-		var corpse_fall_limit: float = room_bounds.position.y + 202.0 if room_id == "breach" else room_bounds.end.y + 18.0
+		# breach's tight 202 fall_limit exists so a ground enemy knocked into
+		# the water hazard mid-fight recovers instead of sinking forever, but
+		# it sits mid-height through that room's platform layer. bone_crow's
+		# home_position is mid-air (it never touches ground while alive), so
+		# its corpse would fall, cross 202 almost immediately, get teleported
+		# back to that same mid-air home_position, and fall again - forever.
+		# Flying corpses get the generous room-bottom limit instead so they
+		# can actually fall and settle like any other corpse.
+		var corpse_fall_limit: float = room_bounds.end.y + 18.0
+		if room_id == "breach" and archetype != Archetype.BONE_CROW:
+			corpse_fall_limit = room_bounds.position.y + 202.0
 		if global_position.y > corpse_fall_limit:
 			global_position = home_position
 			velocity = Vector2.ZERO
@@ -986,16 +1015,32 @@ func _process_bone_crow(delta: float) -> void:
 				velocity = velocity.move_toward(desired_velocity, 330.0 * delta)
 				if attack_cooldown <= 0.0 and diff.length() <= attack_range and _has_line_of_sight():
 					locked_attack_target = actor
-					_set_state(State.WINDUP, 0.44)
+					_set_state(State.WINDUP, 0.30)
 		State.WINDUP:
 			velocity = velocity.move_toward(Vector2.ZERO, 430.0 * delta)
 			if state_timer <= 0.0:
-				if is_instance_valid(locked_attack_target):
-					attack_direction = (locked_attack_target.global_position - global_position).normalized()
+				if not is_instance_valid(locked_attack_target) or not _actor_is_alive(locked_attack_target):
+					locked_attack_target = null
+					attack_cooldown = 0.2
+					_set_state(State.POSITION if _can_notice_target() else State.PATROL, 0.0)
 				else:
-					attack_direction = Vector2(facing, 0.4).normalized()
-				velocity = attack_direction * 215.0
-				_set_state(State.ATTACK, 0.5)
+					# Recompute at launch instead of committing to the target's old position
+					# from before the telegraph. A moving player could add roughly 50px of
+					# separation during the old 0.44s windup, recreating the repeated short
+					# dive even with a smaller trigger range.
+					var predicted_target: Vector2 = locked_attack_target.global_position + locked_attack_target.velocity * 0.18
+					var dive_vector: Vector2 = predicted_target - global_position
+					var dive_distance: float = dive_vector.length()
+					if dive_distance > 210.0 or dive_distance < 1.0 or not _has_line_of_sight():
+						locked_attack_target = null
+						attack_cooldown = 0.24
+						_set_state(State.POSITION, 0.0)
+					else:
+						attack_direction = dive_vector / dive_distance
+						var dive_speed: float = clampf(dive_distance / 0.36, 255.0, 360.0)
+						velocity = attack_direction * dive_speed
+						var dive_duration: float = clampf(dive_distance / dive_speed + 0.16, 0.42, 0.68)
+						_set_state(State.ATTACK, dive_duration)
 		State.ATTACK:
 			if touch_damage_cooldown <= 0.0:
 				_try_melee_hit(27.0, 30.0)
@@ -1135,6 +1180,12 @@ func _update_animation() -> void:
 	# which made the silhouettes snap around independently of the footfalls.
 	sprite.position = sprite_base_position
 	sprite.scale = sprite_base_scale
+	if archetype == Archetype.HANGED_SAILOR:
+		var abs_frames: Array = HANGED_SAILOR_ANIM_FRAMES.get(sprite.animation, [])
+		if sprite.frame < abs_frames.size():
+			var abs_index: int = abs_frames[sprite.frame]
+			if HANGED_SAILOR_FRAME_SCALE_X.has(abs_index):
+				sprite.scale.x = HANGED_SAILOR_FRAME_SCALE_X[abs_index]
 
 	var color: Color = base_modulate
 	if state == State.ALERT:

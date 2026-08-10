@@ -11,6 +11,17 @@ enum CommandMode { FOLLOW, HOLD, ASSAULT }
 const GRAVITY: float = 820.0
 const JUMP_VELOCITY: float = -276.0
 const REFORM_DELAY: float = 0.2
+# Same per-frame width fix as RaggedEnemy - see enemy.gd's
+# HANGED_SAILOR_FRAME_SCALE_X for the measurement this comes from. Keyed by
+# absolute enemy_N.png index; HANGED_SAILOR_ANIM_FRAMES maps AnimatedSprite2D's
+# per-animation-local sprite.frame to that absolute index.
+const HANGED_SAILOR_FRAME_SCALE_X: Dictionary = {
+	0: 0.400, 1: 0.554, 2: 1.384, 3: 0.899, 4: 0.765,
+	5: 0.899, 6: 0.400, 7: 0.545, 8: 0.856, 9: 0.783
+}
+const HANGED_SAILOR_ANIM_FRAMES: Dictionary = {
+	"dead": [0], "rise": [0, 1, 2], "idle": [2, 3], "run": [4, 5, 8, 9], "attack": [6, 7]
+}
 
 var player: NecromancerPlayer
 var resurrected: bool = false
@@ -140,7 +151,9 @@ func _source_scale_correction() -> float:
 		RaggedEnemy.Archetype.BELL_WRETCH:
 			return 0.67
 		RaggedEnemy.Archetype.HANGED_SAILOR:
-			return 0.72
+			return 0.627
+		RaggedEnemy.Archetype.BILGE_CRAWLER:
+			return 0.59
 		RaggedEnemy.Archetype.COFFIN_MIMIC:
 			return 0.68
 		_:
@@ -616,6 +629,12 @@ func _update_animation(target_enemy: RaggedEnemy) -> void:
 	# procedural bob/squash cycle on top of them.
 	sprite.position = sprite_base_position
 	sprite.scale = sprite_base_scale
+	if source_archetype == RaggedEnemy.Archetype.HANGED_SAILOR:
+		var abs_frames: Array = HANGED_SAILOR_ANIM_FRAMES.get(sprite.animation, [])
+		if sprite.frame < abs_frames.size():
+			var abs_index: int = abs_frames[sprite.frame]
+			if HANGED_SAILOR_FRAME_SCALE_X.has(abs_index):
+				sprite.scale.x = HANGED_SAILOR_FRAME_SCALE_X[abs_index] * (sprite_base_scale.x / 0.627)
 
 func can_be_raised() -> bool:
 	return not resurrected

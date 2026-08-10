@@ -141,21 +141,25 @@ func _build_sprite() -> void:
 	sprite.play("idle" if resurrected else "dead")
 
 func _source_scale_correction() -> float:
+	# Kept in sync with RaggedEnemy._build_sprite's per-archetype scale -
+	# see that function's comment for the measurement methodology.
 	match source_archetype:
 		RaggedEnemy.Archetype.SHIELD_GUARD:
-			return 0.67
+			return 0.66
 		RaggedEnemy.Archetype.LANTERN_TOSSER, RaggedEnemy.Archetype.SENTRY:
 			return 0.69
 		RaggedEnemy.Archetype.BRUTE, RaggedEnemy.Archetype.CHARGER:
-			return 0.65
-		RaggedEnemy.Archetype.BELL_WRETCH:
 			return 0.67
+		RaggedEnemy.Archetype.BELL_WRETCH:
+			return 0.62
 		RaggedEnemy.Archetype.HANGED_SAILOR:
 			return 0.627
 		RaggedEnemy.Archetype.BILGE_CRAWLER:
-			return 0.59
-		RaggedEnemy.Archetype.COFFIN_MIMIC:
+			return 0.84
+		RaggedEnemy.Archetype.BONE_CROW:
 			return 0.68
+		RaggedEnemy.Archetype.COFFIN_MIMIC:
+			return 0.8
 		_:
 			return 1.0
 

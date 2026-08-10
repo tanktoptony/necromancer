@@ -235,32 +235,37 @@ func _build_sprite() -> void:
 	# so archetypes sharing those folders render oversized relative to the
 	# player unless corrected here. Position is scaled by the same factor so
 	# feet stay grounded instead of floating once the sprite shrinks.
+	# Re-measured directly against the current committed art (72d7ed) using
+	# scale = target_h_fill(60.6%, the player average) / this archetype's own
+	# measured raw h_fill, computed independently per archetype rather than
+	# compounding onto whatever the previous correction pass's number was -
+	# compounding is how bilge_crawler ended up wrong last pass (0.55 was
+	# 0.68 * 0.806, not target/raw, and the art had also moved again since).
+	# LANTERN_TOSSER/SENTRY/BELL_WRETCH/HANGED_SAILOR measured within 5pp of
+	# target already and are untouched.
 	if archetype == Archetype.CHARGER:
-		sprite.scale = Vector2(0.73, 0.73)
-		sprite.position = Vector2(0.0, -22.2)
+		sprite.scale = Vector2(0.67, 0.67)
+		sprite.position = Vector2(0.0, -22.8)
 	elif archetype == Archetype.HOPPER:
 		sprite.scale = Vector2(0.88, 0.88)
 	elif archetype == Archetype.SENTRY:
 		sprite.scale = Vector2(0.66, 0.66)
 		sprite.position = Vector2(0.0, -23.5)
 	elif archetype == Archetype.BRUTE:
-		sprite.scale = Vector2(0.81, 0.81)
-		sprite.position = Vector2(0.0, -22.2)
+		sprite.scale = Vector2(0.74, 0.74)
+		sprite.position = Vector2(0.0, -25.1)
 	elif archetype == Archetype.BELL_WRETCH:
 		sprite.scale = Vector2(0.62, 0.62)
 		sprite.position = Vector2(0.0, -22.8)
 	elif archetype == Archetype.SHIELD_GUARD:
-		sprite.scale = Vector2(0.72, 0.72)
-		sprite.position = Vector2(0.0, -22.8)
+		sprite.scale = Vector2(0.66, 0.66)
+		sprite.position = Vector2(0.0, -22.5)
 	elif archetype == Archetype.LANTERN_TOSSER:
 		sprite.scale = Vector2(0.65, 0.65)
 		sprite.position = Vector2(0.0, -23.5)
 	elif archetype == Archetype.BILGE_CRAWLER:
-		# Re-measured after the latest art pass: this archetype's frames now
-		# draw at ~72% canvas-height fill on average (vs the ~58% player/guard
-		# target), consistently oversized rather than frame-inconsistent.
-		sprite.scale = Vector2(0.63, 0.55)
-		sprite.position = Vector2(0.0, -19.3)
+		sprite.scale = Vector2(0.63, 0.84)
+		sprite.position = Vector2(0.0, -29.6)
 	elif archetype == Archetype.HANGED_SAILOR:
 		# Height is consistent across frames (~92.5% fill) so a uniform scale
 		# corrects it, but WIDTH varies wildly frame-to-frame (27%-94% fill) -
@@ -269,11 +274,11 @@ func _build_sprite() -> void:
 		sprite.scale = Vector2(0.627, 0.627)
 		sprite.position = Vector2(0.0, -21.3)
 	elif archetype == Archetype.BONE_CROW:
-		sprite.scale = Vector2(0.9, 0.9)
-		sprite.position = Vector2(0.0, -14.0)
+		sprite.scale = Vector2(0.68, 0.68)
+		sprite.position = Vector2(0.0, -10.6)
 	elif archetype == Archetype.COFFIN_MIMIC:
-		sprite.scale = Vector2(0.62, 0.62)
-		sprite.position = Vector2(0.0, -25.0)
+		sprite.scale = Vector2(0.8, 0.8)
+		sprite.position = Vector2(0.0, -32.1)
 	if is_elite:
 		sprite.scale *= 1.18
 	sprite.modulate = base_modulate

@@ -11,7 +11,10 @@
 [ext_resource type="Texture2D" path="res://assets/vania/prop_lantern.png" id="12_lantern"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
-size = Vector2(1152.0, 60.0)
+size = Vector2(480.0, 60.0)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1b"]
+size = Vector2(592.0, 60.0)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_2"]
 size = Vector2(190.0, 12.0)
@@ -52,13 +55,21 @@ z_index = -20
 
 [node name="Collision" type="Node2D" parent="Gameplay"]
 
-[node name="Surface0" type="StaticBody2D" parent="Gameplay/Collision"]
-position = Vector2(576.0, 330.0)
+[node name="LeftFloor" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(240.0, 330.0)
 collision_layer = 1
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/Surface0"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/LeftFloor"]
 shape = SubResource("RectangleShape2D_1")
+
+[node name="RightFloor" type="StaticBody2D" parent="Gameplay/Collision"]
+position = Vector2(856.0, 330.0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Gameplay/Collision/RightFloor"]
+shape = SubResource("RectangleShape2D_1b")
 
 [node name="Surface1" type="StaticBody2D" parent="Gameplay/Collision"]
 position = Vector2(467.0, 251.0)

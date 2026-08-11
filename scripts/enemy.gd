@@ -825,8 +825,18 @@ func _process_windup(delta: float) -> void:
 		Archetype.SENTRY:
 			_set_state(State.ATTACK, 0.2)
 		Archetype.HOPPER:
+			# Fixed 128 px/s horizontal only closes ~89px over the jump's ~0.7s
+			# airtime, but the trigger range is 165px - most hops landed 50-95px
+			# short of the target and never connected. Scale horizontal speed to
+			# the actual distance (recomputed here, not at trigger time, so a
+			# moving target doesn't reintroduce the gap) so the hop's landing
+			# spot tracks where the target actually is.
+			var hop_target_x: float = _target_position().x + _target_velocity().x * 0.15
+			var hop_distance: float = absf(hop_target_x - global_position.x)
+			var hop_airtime: float = 2.0 * 286.0 / GRAVITY
+			var hop_speed: float = clampf(hop_distance / hop_airtime, 90.0, 260.0)
 			_set_state(State.ATTACK, 1.08)
-			velocity = Vector2(attack_direction.x * 128.0, -286.0)
+			velocity = Vector2(attack_direction.x * hop_speed, -286.0)
 		Archetype.BRUTE:
 			_set_state(State.ATTACK, 0.34)
 		Archetype.BELL_WRETCH:
